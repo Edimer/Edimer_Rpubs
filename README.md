@@ -4,7 +4,7 @@ Repositorio con documentos publicados en Rpubs.
 
 ![](https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTkoeG55ji_NyG3-0t4ypPf-1L8wZGwB0LI1g4a3njvEqIZtCTpBg&s)
 
-A continuación la lista de documentos publicados:
+Lista de algunos documentos publicados:
 
 - [Análisis exploratorio de casos y muertes de VIH en Colombia.](https://rpubs.com/Edimer/326811)
 - [Crecimiento del parque automotor vs calidad de aire, Colombia.](https://rpubs.com/Edimer/481799)
