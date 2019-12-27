@@ -1,0 +1,405 @@
+---
+title: "Detección de Oxalatos en Orina"
+subtitle: "Regresión Logística y Regresión Probit"
+author: "Edimer David Jaramillo"
+output:
+  html_notebook:
+    css: estilo.css
+    theme: cosmo
+    highlight: zenburn
+    df_print: paged
+    code_folding: hide
+    toc: true
+    toc_float:
+      smooth_scroll: false
+      collapsed: false
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,
+                      warning = FALSE,
+                      error = FALSE,
+                      message = FALSE,
+                      fig.align = "center",
+                      fig.width = 8.5,
+                      fig.height = 5,
+                      collapse = TRUE)
+```
+
+<center>
+<img src="images/image.png" width = "480" height="320">
+</center>
+
+# Fuente de información
+
+- [Fuente: CRAN Datasets - Urine Analysis Data.](https://vincentarelbundock.github.io/Rdatasets/doc/boot/urine.html)
+- **Descripción:** registros con información de 79 muestras de orina con características físicas.
+- **Variables:** están registradas las siguientes variables:
+    - **`r`**: indicador de presencia de oxalato de calcio. <tred>(Variable Objetivo)</tred>
+        - **`0`:** ausencia de oxalato en orina.
+        - **`1`:** presencia de oxalato en orina.
+    - **`gravity`**: gravedad específica de la orina.
+    - **`ph`**: pH de la orina.
+    - **`osmo`**: osmolaridad de la orina.
+    - **`cond`**: conductivicad de la orina.
+    - **`urea`**: concentración de urea en la orina.
+    - **`calc`**: concentración de calcio (milimoles por litro).
+- **Problema:** determinar si una o más características físicas de la orina están relacionadas con la presencia de oxalatos. Además, generar un modelo capaz de clasificar pacientes con presencia de cristales que podrían ser causantes de patologías (cálculos renales).
+
+# Descripción de Modelos
+
+- Ambas aproximaciones (*logística* o *probit*) son útiles para modelar la probabilidad de un evento (variable dependiente) que ocurre como función de otros factores (variables independientes o predictoras).
+- Hacen parte de los [*Modelos Lineales Generalizados - GLM*](https://es.wikipedia.org/wiki/Modelo_lineal_generalizado).
+- Ambas metodologías utilizan funciones de enlace - *linkage* que permiten variables respuesta con distribución de errores no gaussianas. Ideal para variables objetivo con distribución *Poisson*, *Binomial*, *Gamma*, entre otras.
+    - [*Función logit:*](https://es.wikipedia.org/wiki/Logit) función de enlace con aplicaciones en regresión logística.
+    - [*Función probit:*](https://es.wikipedia.org/wiki/Funci%C3%B3n_probit) función de enlace con aplicaciones en regresión probit. Esta función es la inversa de la función de distribución de la normal estándar.
+- La estimación de los parámetros para ambos modelos puede ser a través de [*Máxima Verosimilitud.*](https://es.wikipedia.org/wiki/M%C3%A1xima_verosimilitud)
+- Ambos modelos en *R* pueden ser ajustados a través de la función `glm()`.
+- Aunque las estimaciones con ambos modelos podrán ser similares, la regresión logística ha sido ampliamente utilizda en entornos epidemiológicos (ciencias de la salud), mientras que la regresión probit es común en contextos econométricos.
+- **Validación de modelos:** dado que el número de observaciones (filas) es bajo, se opta por implemetar [*Leave One Out Cross-Validation (LOOCV)*](https://en.wikipedia.org/wiki/Cross-validation_(statistics)#Exhaustive_cross-validation). Este procedimiento permitirá ajustar tantos modelos cómo número de observaciones ($n$). Aunque el método es costoso computacionalmente, permitirá reducir la variabilidad que se origina si se dividen aleatoriamente las observaciones únicamente en dos grupos (*train* y *test*). También es importante mencionar que el hecho de usar todos los registros puede aumentar la probabilidad de sobreentrenear el modelo ([*overfitting.*](https://en.wikipedia.org/wiki/Overfitting))
+    - En R se puede realizar *LOOCV* de cualquier modelo lineal generalizado (`glm()`) haciendo uso de la función `cv.glm()` del paquete `boot`. Esta función calcula el error de predicción a través de *validación cruzada*. Cuando el argumento `K` no se especifica, por defecto será igual al número de observaciones ([ayuda: ?cv.glm()](https://www.rdocumentation.org/packages/boot/versions/1.3-23/topics/cv.glm)). Este procedimiento también es posible realizarlo manualmente por medio de <tred>*loops*</tred> empleando la función `update()`.
+    - Para medir el desempeño de los modelos en términos de *accuracy* se implementan diferentes límites ([*threshold*](https://stats.stackexchange.com/questions/312119/classification-probability-threshold)) de clasificación para las probabilidades predichas. Los umbrales probados fueron 0.65, 0.6, 0.55, 0.5, 0.45 y 0.4.
+- <tred>**Observación:**</tred> modelar una variable dicotómica ($y$) con la regresión lineal clásica podría no restringir los valores de la respuesta entre 0 y 1  (ver figura 1). Además, es altamente probable que al usar este tipo de modelos se incumplan los supuestos de normalidad de los residuales.
+
+<center>
+<img src="images/log2.jpg" width = "580" height="420">
+<figcaption>Figura 1. Modelos Lineal, Logístico y Probit.</figcaption>
+</center>
+
+### [Regresión Logística](https://en.wikipedia.org/wiki/Logistic_regression)
+
+- La regresión logística analiza datos con [*distribución binomial*](https://en.wikipedia.org/wiki/Binomial_distribution) de la forma:
+
+$$Y_i \sim\ B(p_i,\ n_i),\ para\ i=1,...,m$$
+
+- En la expresión anterior $p_i$ hace referencia a la probabilidad de éxito (probabilidad de que ocurra el evento bajo estudio) y $n_i$ determina el número de ensayos tipo *Bernoulli*. El número de ensayos es conocido, sin embargo, la probabilidad del éxito se desconoce.
+- Se debe cumplir que la respuesta esté acotada entre 0 y 1, es decir, que el resultado siempre será positivo, además de ser inferior a 1.
+- El exponencial ($e$) de cualquier valor ($x$) es siempre positivo y, cualquier número divivido entre la cantidad más uno ($x+1$) siempre será menor que 1. Bajo estas dos premisas se puede expresar la siguiente probabilidad condicional (función logística):
+
+$$p(Y =1\ |\ X)=\frac{e^{(\beta_0+\beta_1x)}}{e^{(\beta_0+\beta_1x)}+1}$$
+
+- Para facilitar el cálculo escribimos $p(Y =1\ |\ X)$ como $p(X)$:
+
+$$p(X) = \frac{e^{(\beta_0+\beta_1x)}}{e^{(\beta_0+\beta_1x)}+1}\\
+p(e^{(\beta_0+\beta_1x)}+1) = e^{(\beta_0+\beta_1x)}\\
+p \times e^{(\beta_0+\beta_1x)}\ +\ p = e^{(\beta_0+\beta_1x)}\\
+p = e^{(\beta_0+\beta_1x)}\ -\ p \times e^{(\beta_0+\beta_1x)}\\
+p = e^{(\beta_0+\beta_1x)}(1-p)\\
+\frac{p}{1-p} = e^{(\beta_0+\beta_1x)}$$
+
+- Los *logits* (función de enlace) de las probabilidades binomiales desconocidas, es decir, los logaritmos de la [*razón de momios (odds ratio)*](https://es.wikipedia.org/wiki/Raz%C3%B3n_de_momios) son modelados como una función lineal de los $X_i$:
+
+$$ln(\frac{p}{1-p}) = \beta_0+\beta_1x$$
+
+- Esta función de enlace es conocida como *sigmoide* y limita su rango de probabilidades entre 0 y 1 (ver figura 2).
+
+<center>
+<img src="images/sigmoid.png" width = "580" height="420">
+<figcaption>Figura 2. Función sigmoide.</figcaption>
+</center>
+
+### [Regresión Probit](https://en.wikipedia.org/wiki/Probit_model)
+
+- La regresión probit permite analizar datos con respuesta ordinal o con *distribución binomial* (respuestas dicotómicas) de la forma:
+
+$$Y_i \sim\ B(p_i,\ n_i),\ para\ i=1,...,m$$
+
+- El marco conceptual del modelo probit puede ser expresado de la siguiente manera:
+
+$$p(Y = 1|X)=\ \Phi(X^{T}\beta)$$
+
+- Donde $p(Y = 1|X)$ denota la probabilidad, $\Phi$ es la función de distribución acumulativa de la distribución normal estándar y $\beta$ son los parámetros del modelo, estimados a través de máxima verosimilitud.
+- El modelo puede ser expresado de la siguiente manera: $Y = X^{T}\beta+\epsilon$, donde $\epsilon \sim N(0, 1)$.
+- Las funciones logística y probit difieren en la manera como definen la función de distribución, mientras que la primera utiliza la función logística la segunda hace uso de la función de distribución acumulada de la normal estándar. Ambas funciones pueden ser comparadas en la siguiente figura:
+
+<center>
+<img src="images/logit_probit3.png" width = "530" height="400">
+<figcaption>Figura 3. Función logit y probit.</figcaption>
+</center>
+
+# Base de Datos
+
+```{r}
+# Importando datos
+library(dplyr)
+datos <- read.csv("Datos/Orina.csv") %>% 
+  select(-X)
+
+# Conversión de variable objetivo a factor
+datos$r <- as.factor(datos$r)
+
+# Imprimiendo datos
+datos
+```
+
+# Análisis Descriptivo
+
+### Positivos (`1`) y negativos (`0`)
+
+```{r}
+library(DT)
+datos %>% 
+  group_by(r) %>% 
+  summarise(Total = n()) %>% 
+  ungroup() %>% 
+  mutate(`F. Relativa` = round(Total/sum(Total), digits = 2),
+         Proporción = paste0(`F. Relativa` * 100, "%")) %>% 
+  rename(Oxalato = r)
+```
+
+### Estadísticos descripvitos
+
+```{r}
+library(tidyr)
+datos %>% 
+  gather(key = "variable", value = "valor", -r) %>% 
+  group_by(variable, r) %>% 
+  summarise(Promedio = round(mean(valor, na.rm = TRUE), digits = 2),
+            `D. Estándar` = round(sd(valor, na.rm = TRUE), digits = 2),
+            Mínimo = round(min(valor, na.rm = TRUE), digits = 2),
+            Máximo = round(max(valor, na.rm = TRUE), digits = 2),
+            Q1 = round(quantile(valor, prob = 0.25, na.rm = TRUE), digits = 2),
+            Q2 = round(quantile(valor, prob = 0.5, na.rm = TRUE), digits = 2),
+            Q3 = round(quantile(valor, prob = 0.75, na.rm = TRUE), digits = 2)) %>% 
+  rename(Oxalato = r, Variable = variable) %>% 
+  datatable()
+```
+
+
+# Análisis Exploratorio
+
+### Datos ausentes
+
+```{r, echo=TRUE}
+library(broom)
+tidy(apply(datos, MARGIN = 2, is.na)) %>% 
+  gather(key = "variable", value = "valor") %>% 
+  mutate(valor = as.numeric(valor))  %>% 
+  group_by(variable) %>% 
+  summarise(Total_NAs = sum(valor))
+```
+
+### Densidades
+
+```{r, fig.height=5}
+library(ggplot2)
+colores <- c("dodgerblue", "gray40")
+datos %>% 
+  rename(Oxalato = r) %>% 
+  gather(key = "variable", value = "valor", -Oxalato) %>% 
+  ggplot(data = ., aes(x = valor, fill = Oxalato)) +
+  facet_wrap(~variable, scales = "free") +
+  geom_density(alpha = 0.7) +
+  scale_fill_manual(values = colores) +
+  labs(x = "", y = "") +
+  theme_light() +
+  theme(legend.position = "bottom")
+```
+
+### Distribución condicional
+
+- Las densidades condicionales son gráficos exploratorios que permiten dilucidar cómo es la probabilidad de "éxito" o "fracaso" respecto a variables numéricas. Es posible evidenciar en qué puntos (valores de x) se maximiza la probabilidad de "éxito", que en este caso está ligado a la presencia (<tred>r = 1</tred>) de oxalatos en orina.
+
+```{r}
+par(mfrow = c(2, 3))
+cdplot(datos$r ~ datos$gravity, xlab = "Gravedad específica",
+       ylab = "Oxalato", col = colores)
+cdplot(datos$r ~ datos$ph, xlab = "pH",
+       ylab = "Oxalato", col = colores)
+cdplot(datos$r ~ datos$osmo, xlab = "Osmolaridad",
+       ylab = "Oxalato", col = colores)
+cdplot(datos$r ~ datos$cond, xlab = "Conductividad",
+       ylab = "Oxalato", col = colores)
+cdplot(datos$r ~ datos$urea, xlab = "Urea",
+       ylab = "Oxalato", col = colores)
+cdplot(datos$r ~ datos$calc, xlab = "Calcio",
+       ylab = "Oxalato", col = colores)
+```
+
+### Boxplot comparativo
+
+```{r, fig.height=5}
+datos %>% 
+  rename(Oxalato = r) %>% 
+  gather(key = "variable", value = "valor", -Oxalato) %>% 
+  ggplot(data = ., aes(x = Oxalato, y = valor, fill = Oxalato)) +
+  facet_wrap(~variable, scales = "free") +
+  geom_boxplot() +
+  scale_fill_manual(values = colores) +
+  labs(x = "", y = "") +
+  theme_light() +
+  theme(legend.position = "bottom")
+```
+
+
+# Modelos
+
+### Ajuste de modelos
+
+```{r, echo=TRUE}
+# Modelos Lineales Generalizados
+mod_logit  <- glm(r ~ ., data = datos, family = binomial(link = "logit"))
+mod_probit <- glm(r ~ ., data = datos, family = binomial(link = "probit"))
+
+# -------- Validación LOOCV (Manual)
+out_logi <- NULL
+out_prob <- NULL
+for(i in 1:nrow(datos)){
+  out_logi[i] = predict(update(mod_logit, data = datos[-i, ]),
+                   newdata = datos[i,], type = "response")
+  out_prob[i] = predict(update(mod_probit, data = datos[-i, ]),
+                   newdata = datos[i,], type = "response")
+}
+
+# -------- Validación LOOCV (cv.glm())
+
+## Función de coste con cutoff = 0.5
+coste_0.5 <- function(r, pi = 0) mean(abs(r-pi)> 0.5)
+
+## LOOCV
+library(boot)
+cv_error_logi_0.5 <- cv.glm(data = datos %>% filter(!is.na(osmo) & !is.na(cond)),
+                        glmfit = mod_logit, cost = coste_0.5)
+cv_error_prob_0.5 <- cv.glm(data = datos %>% filter(!is.na(osmo) & !is.na(cond)),
+                        glmfit = mod_probit, cost = coste_0.5)
+```
+
+- <tred>**Observaciones:**</tred> la ejecución automática de *LOOCV* con la función `cv.glm()` requiere una función de coste para calcular el error. El objeto devuelto por la función del paquete `boot` almacena el error con el nombre `delta`; al restar 1 menos el error (delta) se obtendrá la precisión o *accuracy* del modelo, que es exactamente el mismo valor obtenido manualmente.
+    - **Función de coste:** en el código hay una función de coste o pérdida para el límite igual a 0.5. Esta función puede ser expresada de la siguiente manera: $error = \sum |r_i - p_i| > 0.5$. Donde $r_i$ es el i-ésimo valor real y $p_i$ es el i-ésimo valor predicho. En el siguiente código es posible evidenciar que se obtienen los mismos resultados de forma manual y con la función `cv.glm()`.
+    
+```{r, echo=TRUE}
+# Precisión manual - R. Logística (0.5)
+manual_logi_0.5 <- if_else(out_logi_0.5 > 0.5, true = "1", false = "0")
+manual_logi_0.5 <- mean(datos$r == manual_logi_0.5, na.rm = TRUE)
+
+# Precisión con cv.glm() - R. Logística (0.5)
+cv_logi_0.5 <- 1 - cv_error_logi_0.5$delta[1]
+
+# Precisión manual - R. Probit (0.5)
+manual_prob_0.5 <- if_else(out_prob_0.5 > 0.5, true = "1", false = "0")
+manual_prob_0.5 <- mean(datos$r == manual_prob_0.5, na.rm = TRUE)
+
+# Precisión con cv.glm() - R. Logística (0.5)
+cv_prob_0.5 <- 1 - cv_error_prob_0.5$delta[1]
+
+# Imprimiendo resultados
+cat(paste0("R. Logística 0.5 Manual = ", manual_logi_0.5),
+    "y R. Logística 0.5 cv.glm() = ", cv_logi_0.5)
+```
+    
+
+### Resumen R. Logística
+
+```{r, echo=TRUE}
+tidy(mod_logit) %>% 
+  select(term, estimate, p.value) %>% 
+  mutate(signif = if_else(p.value <= 0.05, true = "Significativo",
+                          false = "No significativo"))
+```
+
+
+### Resumen R. Probit
+
+```{r, echo=TRUE}
+tidy(mod_probit) %>% 
+  select(term, estimate, p.value) %>% 
+  mutate(signif = if_else(p.value <= 0.05, true = "Significativo",
+                          false = "No significativo"))
+```
+
+# Comparación de Modelos
+
+- **Tabla:**
+
+```{r, echo = TRUE}
+# Punto de corte 0.65 - clases 0 y 1
+out_logi_0.65 <- if_else(condition = out_logi > 0.65, true = "1", false = "0")
+out_prob_0.65 <- if_else(condition = out_prob > 0.65, true = "1", false = "0")
+
+# Punto de corte 0.6 - clases 0 y 1
+out_logi_0.6 <- if_else(condition = out_logi > 0.6, true = "1", false = "0")
+out_prob_0.6 <- if_else(condition = out_prob > 0.6, true = "1", false = "0")
+
+# Punto de corte 0.55 - clases 0 y 1
+out_logi_0.55 <- if_else(condition = out_logi > 0.55, true = "1", false = "0")
+out_prob_0.55 <- if_else(condition = out_prob > 0.55, true = "1", false = "0")
+
+# Punto de corte 0.5 - clases 0 y 1
+out_logi_0.5 <- if_else(condition = out_logi > 0.5, true = "1", false = "0")
+out_prob_0.5 <- if_else(condition = out_prob > 0.5, true = "1", false = "0")
+
+# Punto de corte 0.45 - clases 0 y 1
+out_logi_0.45 <- if_else(condition = out_logi > 0.45, true = "1", false = "0")
+out_prob_0.45 <- if_else(condition = out_prob > 0.45, true = "1", false = "0")
+
+# Punto de corte 0.4 - clases 0 y 1
+out_logi_0.4 <- if_else(condition = out_logi > 0.4, true = "1", false = "0")
+out_prob_0.4 <- if_else(condition = out_prob > 0.4, true = "1", false = "0")
+
+# Error de modelos
+df_accuracy <- data.frame(
+  Modelo = c("R. Logística - (0.65)", "R. Probit - (0.65)",
+             "R. Logística - (0.6)", "R. Probit - (0.6)",
+             "R. Logística - (0.55)", "R. Probit - (0.55)",
+             "R. Logística - (0.5)", "R. Probit - (0.5)",
+             "R. Logística - (0.45)", "R. Probit - (0.45)",
+             "R. Logística - (0.4)", "R. Probit - (0.4)"),
+  Accucary = c(mean(datos$r == out_logi_0.65, na.rm = TRUE),
+               mean(datos$r == out_prob_0.65, na.rm = TRUE),
+               mean(datos$r == out_logi_0.6, na.rm = TRUE),
+               mean(datos$r == out_prob_0.6, na.rm = TRUE),
+               mean(datos$r == out_logi_0.55, na.rm = TRUE),
+               mean(datos$r == out_prob_0.55, na.rm = TRUE),
+               mean(datos$r == out_logi_0.5, na.rm = TRUE),
+               mean(datos$r == out_prob_0.5, na.rm = TRUE),
+               mean(datos$r == out_logi_0.45, na.rm = TRUE),
+               mean(datos$r == out_prob_0.45, na.rm = TRUE),
+               mean(datos$r == out_logi_0.4, na.rm = TRUE),
+               mean(datos$r == out_prob_0.4, na.rm = TRUE))
+) %>% 
+  separate(Modelo, into = c("Modelo", "Límite"), remove = FALSE, sep = "-")
+
+df_accuracy
+```
+
+- **Gráfico:**
+
+```{r}
+df_accuracy %>% 
+  ggplot(data = ., aes(x = Límite, y = Accucary, color = Modelo)) +
+  geom_point(size = 4, pch = 18) +
+  geom_line(aes(group = Modelo), lwd = 0.8) +
+  scale_color_manual(values = colores) +
+  labs(x = "Límite (threshold)", y = "Accuracy",
+       color = "", title = "Accuracy con diferentes límites de probabilidad") +
+  theme_light() +
+  theme(legend.position = "bottom")
+  
+```
+
+
+# Modelo Final
+
+### Conclusiones
+
+- Ambos modelos presentan desempeños similares en la detección de oxalatos en orina.  Para el modelo logístico son estadísticamente significativas las variables urea ($p=0.047025469$) y calcio ($p=0.001211312$), no obstante, para el modelo probit sólo es significativa la variable calcio ($p = 0.0004386245$).
+- El signo de los coeficientes estimados para ambos modelos es el mismo. Esto indica que ambas aproximaciones poseen similitud en cuanto a la relación de cambio, sin embargo, la magnitud estimada es diferente.
+- Se observa diferencia en la precisión de los modelos para puntos de corte (*cutoff*) distintos, obteniendo las mejores predicciones con límites iguales a 0.6 y 0.65. La precisión es más baja con ambos modelos cuando se emplean umbrales iguales a 0.45 y 0.5
+
+### Modelo Logístico
+
+- En términos logarítmicos el modelo puede ser expresado de la siguiente manera:
+
+$$logit(oxalato = 1) = -355.3377 + 355.9437\times grav - 0.4957\times pH +\\ 0.0168\times osmo - 0.4328\times conduc - 0.0320\times urea + 0.7836 \times calcio$$
+
+- Si se quiere calcular la probabilidad para cualquier combinación de valores de predictoras, se puede obtener de la siguiente manera:
+
+$$p(oxalato = 1) = \frac{e^{-355.3377 + 355.9437\times grav - 0.4957\times pH + 0.0168\times osmo - 0.4328\times conduc - 0.0320\times urea + 0.7836 \times calcio}}{1 + e^{-355.3377 + 355.9437\times grav - 0.4957\times pH + 0.0168\times osmo - 0.4328\times conduc - 0.0320\times urea + 0.7836 \times calcio}}$$
+
+# Referencias
+
+1. [Libro: An Introduction to Statistical Learning (chapter 4 - Classification)](http://www.ime.unicamp.br/~dias/Intoduction%20to%20Statistical%20Learning.pdf)
+2. [Libro: The Elements of Statistical Learning (chapter 4 - Classification)](https://web.stanford.edu/~hastie/Papers/ESLII.pdf)
+3. [Advanced Regression Models](http://r-statistics.co/adv-regression-models.html)
+4. [Logistic Regression](http://r-statistics.co/Logistic-Regression-With-R.html)
+5. [Probit Regression](http://r-statistics.co/Probit-Regression-With-R.html)
