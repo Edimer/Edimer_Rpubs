@@ -49,7 +49,8 @@ knitr::opts_chunk$set(echo = TRUE,
     2.6 Edición de nombres de variables (no se tienen en cuenta tildes por viabilidad de análisis).    
     2.7 Filtrado de datos atípicos (errados) para variables químicas y físicas de suelo. Este filtro se aplicó basado en literatura y percentiles.
 3. Información general
-4. Análisis descriptivo
+4. Análisis descriptivo    
+    4.1 Deciles para cada variable numérica
 5. Análisis exploratorio
 6. Aprendizaje no supervisado
 7. Referencias
@@ -196,7 +197,7 @@ datos2 <- datos1 %>%
   # Punto 2.6
   rename(tiempo_estab = Tiempo.Establecimiento,
          fertilizantes = Fertilizantes.aplicados,
-         pH_agua = pH.agua.suelo.2.5.1.0,
+         pH_agua_suelo = pH.agua.suelo.2.5.1.0,
          materia_org = Materia.orgánica..MO...,
          P_mg_kg = Fósforo..P..Bray.II.mg.kg,
          S_mg_kg = Azufre..S..Fosfato.monocalcico.mg.kg,
@@ -286,7 +287,17 @@ datos2
 
 ## 4. Análisis descriptivo
 
+### Deciles
 
+```{r}
+as.data.frame(datos2 %>%
+  select_if(is.numeric) %>%
+  apply(., 2,
+        function(x){
+          round(quantile(x, probs = seq(0.1, 1, 0.1), na.rm = TRUE), digits = 2)
+          }))
+```
+    
     
 ## 5. Análisis exploratorio
 
