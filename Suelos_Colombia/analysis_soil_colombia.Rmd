@@ -11,7 +11,7 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE,
+knitr::opts_chunk$set(echo = TRUE,
                       warning = FALSE,
                       error = FALSE,
                       message = FALSE,
@@ -33,21 +33,185 @@ knitr::opts_chunk$set(echo = FALSE,
 # Metodología
 
 1. Importación de datos
-2. Depuración, estructuración e integración de datos.
+2. Depuración, estructuración e integración de datos.  
+    2.1 Selección de variables de interés.       
+    2.2 Unificación de mayúsuculas a minúsculas.   
+    2.3 Unificación de niveles de factores (variables categóricas).     
+    2.4 Eliminación de símbolos en variables numéricas.   
+    2.5 Coerción de variables.    
+    2.6 Edición de nombres de variables (no se tienen en cuenta tildes por viabilidad de análisis).
 
 # Resultados {.tabset .tabset-fade .tabset-pills}
 
 ## 1. Lectura de datos
 
 ```{r}
-
+datos1 <- read.csv("../data/Datos_Suelos_Colombia.csv", encoding = "UTF-8")
 ```
 
 ## 2. Depuración, Estructuración e Integración
 
-## 3. Análisis exploratorio
+```{r}
+library(Hmisc)
+library(dplyr)
+datos2 <- datos1 %>% 
+  # Punto 2.1
+  select(-c(numfila, FechaAnalisis, Secuencial)) %>% 
+  # Punto 2.2
+  mutate_at(c("Departamento", "Municipio", "Cultivo", "Estado",
+              "Tiempo.Establecimiento", "Topografia", "Drenaje", "Riego",
+              "Fertilizantes.aplicados"), as.character) %>%
+  mutate_at(c("Departamento", "Municipio", "Cultivo", "Estado",
+              "Tiempo.Establecimiento", "Topografia", "Drenaje", "Riego",
+              "Fertilizantes.aplicados"), tolower) %>% 
+  mutate_at(c("Departamento", "Municipio", "Cultivo", "Estado",
+              "Tiempo.Establecimiento", "Topografia", "Drenaje", "Riego",
+              "Fertilizantes.aplicados"), capitalize) %>% 
+  # Punto 2.3
+  mutate(Topografia = gsub("Error: #n/a", "Error", Topografia),
+         Drenaje = gsub("Buen drenaje", "Bueno", Drenaje),
+         Drenaje = gsub("Muy buen drenaje", "Bueno", Drenaje),
+         Drenaje = gsub("Mal drenaje", "Malo", Drenaje),
+         Drenaje = gsub("Regular drenaje", "Regular", Drenaje),
+         Drenaje = gsub("Error: #n/a", "Error", Drenaje),
+         Cultivo = gsub("Anon", "Anón", Cultivo),
+         Cultivo = gsub("Aromaticas", "Aromáticas", Cultivo),
+         Cultivo = gsub("cidron", "cidrón", Cultivo),
+         Cultivo = gsub("oregano", "orégano", Cultivo),
+         Cultivo = gsub("Arrayan", "Arrayán", Cultivo),
+         Cultivo = gsub("Asai", "Asaí", Cultivo),
+         Cultivo = gsub("Balu", "Balú", Cultivo),
+         Cultivo = gsub("Brocoli", "Brócoli", Cultivo),
+         Cultivo = gsub("Caña panelera/azucar", "Caña/azúcar", Cultivo),
+         Cultivo = gsub("Caña/azucar", "Caña/azúcar", Cultivo),
+         Cultivo = gsub("Citricos", "Cítricos", Cultivo),
+         Cultivo = gsub("Epifitas ", "Epífitas ", Cultivo),
+         Cultivo = gsub("arborea", "arbórea", Cultivo),
+         Cultivo = gsub("Guanabana", "Guanábana", Cultivo),
+         Cultivo = gsub("Mani", "Maní", Cultivo),
+         Cultivo = gsub("Marañon", "Marañón", Cultivo),
+         Cultivo = gsub("Rambutan", "Rambután", Cultivo),
+         Cultivo = gsub("Saman", "Samán", Cultivo)) %>% 
+  # Punto 2.4
+  mutate(pH.agua.suelo.2.5.1.0 = gsub("[< | >]", "", pH.agua.suelo.2.5.1.0),
+         pH.agua.suelo.2.5.1.0 = gsub("[,]", ".", pH.agua.suelo.2.5.1.0),
+         Fósforo..P..Bray.II.mg.kg = gsub("[< | >]", "",
+                                          Fósforo..P..Bray.II.mg.kg),
+         Fósforo..P..Bray.II.mg.kg = gsub("[,]", ".",
+                                          Fósforo..P..Bray.II.mg.kg),
+         Azufre..S..Fosfato.monocalcico.mg.kg = gsub("[< | >]", "",
+                                          Azufre..S..Fosfato.monocalcico.mg.kg),
+         Azufre..S..Fosfato.monocalcico.mg.kg = gsub("[,]", ".",
+                                          Azufre..S..Fosfato.monocalcico.mg.kg),
+         Acidez..Al.H..KCL.cmol....kg = gsub("[< | >]", "",
+                                          Acidez..Al.H..KCL.cmol....kg),
+         Acidez..Al.H..KCL.cmol....kg = gsub("[,]", ".",
+                                          Acidez..Al.H..KCL.cmol....kg),
+         Aluminio..Al..intercambiable.cmol....kg = gsub("[< | >]", "",
+                                          Aluminio..Al..intercambiable.cmol....kg),
+         Aluminio..Al..intercambiable.cmol....kg = gsub("[,]", ".",
+                                          Aluminio..Al..intercambiable.cmol....kg),
+         Calcio..Ca..intercambiable.cmol....kg = gsub("[< | >]", "",
+                                          Calcio..Ca..intercambiable.cmol....kg),
+         Calcio..Ca..intercambiable.cmol....kg = gsub("[,]", ".",
+                                          Calcio..Ca..intercambiable.cmol....kg),
+         Magnesio..Mg..intercambiable.cmol....kg = gsub("[< | >]", "",
+                                          Magnesio..Mg..intercambiable.cmol....kg),
+         Magnesio..Mg..intercambiable.cmol....kg = gsub("[,]", ".",
+                                          Magnesio..Mg..intercambiable.cmol....kg),
+         Potasio..K..intercambiable.cmol....kg = gsub("[< | >]", "",
+                                          Potasio..K..intercambiable.cmol....kg),
+         Potasio..K..intercambiable.cmol....kg = gsub("[,]", ".",
+                                          Potasio..K..intercambiable.cmol....kg),
+         Sodio..Na..intercambiable.cmol....kg = gsub("[< | >]", "",
+                                          Sodio..Na..intercambiable.cmol....kg),
+         Sodio..Na..intercambiable.cmol....kg = gsub("[,]", ".",
+                                          Sodio..Na..intercambiable.cmol....kg),
+         capacidad.de.intercambio.cationico..CICE..suma.de.bases.cmol....kg
+         = gsub("[< | >]", "",
+                capacidad.de.intercambio.cationico..CICE..suma.de.bases.cmol....kg),
+         capacidad.de.intercambio.cationico..CICE..suma.de.bases.cmol....kg
+         = gsub("[,]", ".",
+                capacidad.de.intercambio.cationico..CICE..suma.de.bases.cmol....kg),
+         Conductividad.el.ctrica..CE..relacion.2.5.1.0.dS.m
+         = gsub("[< | >]", "",
+                Conductividad.el.ctrica..CE..relacion.2.5.1.0.dS.m),
+         Conductividad.el.ctrica..CE..relacion.2.5.1.0.dS.m
+         = gsub("[,]", ".",
+                Conductividad.el.ctrica..CE..relacion.2.5.1.0.dS.m),
+         Hierro..Fe..disponible.olsen.mg.kg = gsub("[< | >]", "",
+                                          Hierro..Fe..disponible.olsen.mg.kg),
+         Hierro..Fe..disponible.olsen.mg.kg = gsub("[,]", ".",
+                                          Hierro..Fe..disponible.olsen.mg.kg),
+         Cobre..Cu..disponible.mg.kg = gsub("[< | >]", "",
+                                          Cobre..Cu..disponible.mg.kg),
+         Cobre..Cu..disponible.mg.kg = gsub("[,]", ".",
+                                          Cobre..Cu..disponible.mg.kg),
+         Manganeso..Mn..disponible.Olsen.mg.kg = gsub("[< | >]", "",
+                                          Manganeso..Mn..disponible.Olsen.mg.kg),
+         Manganeso..Mn..disponible.Olsen.mg.kg = gsub("[,]", ".",
+                                          Manganeso..Mn..disponible.Olsen.mg.kg),
+         Zinc..Zn..disponible.Olsen.mg.kg = gsub("[< | >]", "",
+                                          Zinc..Zn..disponible.Olsen.mg.kg),
+         Zinc..Zn..disponible.Olsen.mg.kg = gsub("[,]", ".",
+                                          Zinc..Zn..disponible.Olsen.mg.kg),
+         Boro..B..disponible.mg.kg = gsub("[< | >]", "",
+                                          Boro..B..disponible.mg.kg),
+         Boro..B..disponible.mg.kg = gsub("[,]", ".",
+                                          Boro..B..disponible.mg.kg),
+         Hierro..Fe..disponible.doble..cido.mg.kg = gsub("[< | >]", "",
+                                          Hierro..Fe..disponible.doble..cido.mg.kg),
+         Hierro..Fe..disponible.doble..cido.mg.kg = gsub("[,]", ".",
+                                          Hierro..Fe..disponible.doble..cido.mg.kg),
+         Cobre..Cu..disponible.doble.acido.mg.kg = gsub("[< | >]", "",
+                                          Cobre..Cu..disponible.doble.acido.mg.kg),
+         Cobre..Cu..disponible.doble.acido.mg.kg = gsub("[,]", ".",
+                                          Cobre..Cu..disponible.doble.acido.mg.kg),
+         Manganeso..Mn..disponible.doble.acido.mg.kg = gsub("[< | >]", "",
+                                          Manganeso..Mn..disponible.doble.acido.mg.kg),
+         Manganeso..Mn..disponible.doble.acido.mg.kg = gsub("[,]", ".",
+                                          Manganeso..Mn..disponible.doble.acido.mg.kg),
+         Zinc..Zn..disponible.doble..cido.mg.kg = gsub("[< | >]", "",
+                                          Zinc..Zn..disponible.doble..cido.mg.kg),
+         Zinc..Zn..disponible.doble..cido.mg.kg = gsub("[,]", ".",
+                                          Zinc..Zn..disponible.doble..cido.mg.kg)) %>% 
+  # Punto 2.5
+  mutate_at(c("Departamento", "Municipio", "Cultivo", "Estado",
+              "Tiempo.Establecimiento", "Topografia", "Drenaje", "Riego",
+              "Fertilizantes.aplicados"), as.factor) %>% 
+  mutate_if(is.character, as.numeric) %>% 
+  # Punto 2.6
+  rename(tiempo_estab = Tiempo.Establecimiento,
+         fertilizantes = Fertilizantes.aplicados,
+         pH_agua = pH.agua.suelo.2.5.1.0,
+         materia_org = Materia.orgánica..MO...,
+         P_mg_kg = Fósforo..P..Bray.II.mg.kg,
+         S_mg_kg = Azufre..S..Fosfato.monocalcico.mg.kg,
+         acidez_cmol_kg = Acidez..Al.H..KCL.cmol....kg,
+         Al_cmol_kg = Aluminio..Al..intercambiable.cmol....kg,
+         Ca_cmol_kg = Calcio..Ca..intercambiable.cmol....kg,
+         Mg_cmol_kg = Magnesio..Mg..intercambiable.cmol....kg,
+         K_cmol_kg = Potasio..K..intercambiable.cmol....kg,
+         Na_cmol_kg = Sodio..Na..intercambiable.cmol....kg,
+         CICE = capacidad.de.intercambio.cationico..CICE..suma.de.bases.cmol....kg,
+         conductividad = Conductividad.el.ctrica..CE..relacion.2.5.1.0.dS.m,
+         Fe_olsen_mg_kg = Hierro..Fe..disponible.olsen.mg.kg,
+         Cu_doble1_mg_kg = Cobre..Cu..disponible.doble.acido.mg.kg,
+         Mn_olsen_mg_kg = Manganeso..Mn..disponible.doble.acido.mg.kg,
+         Zn_olsen_mg_kg = Zinc..Zn..disponible.doble..cido.mg.kg,
+         B_mg_kg = Boro..B..disponible.mg.kg,
+         Fe_doble_mg_kg = Hierro..Fe..disponible.doble..cido.mg.kg,
+         Cu_doble2_mg_kg = Cobre..Cu..disponible.doble.acido.mg.kg,
+         Mn_doble_mg_kg = Manganeso..Mn..disponible.doble.acido.mg.kg,
+         Zn_doble_mg_kg = Zinc..Zn..disponible.doble..cido.mg.kg)
+datos2
+```
 
-## 4. Modelos
+## 3. Análisis descriptivo
 
-## 4. Referencias
+## 4. Análisis exploratorio
+
+## 5. Modelos
+
+## 6. Referencias
 
