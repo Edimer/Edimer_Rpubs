@@ -224,8 +224,9 @@ datos2 <- datos1 %>%
   filter(Fe_olsen_mg_kg <= 1000) %>% 
   filter(Cu_doble1_mg_kg <= 10) %>% 
   filter(Zn_olsen_mg_kg <= 20) %>% 
+  filter(B_mg_kg <= 20) %>% 
   # Finalizando depuración
-  select(-Zn_doble_mg_kg) %>% 
+  select(-c(Zn_doble_mg_kg, Fe_doble_mg_kg, Cu_doble2_mg_kg, Mn_doble_mg_kg)) %>% 
   droplevels()
   
 datos2
@@ -284,6 +285,8 @@ datos2
     - **Fertilizantes:** información de `r length(levels(datos2$fertilizantes))` tipos de fertilización diferente.
 
 ## 4. Análisis descriptivo
+
+
     
 ## 5. Análisis exploratorio
 
