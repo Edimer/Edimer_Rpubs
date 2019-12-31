@@ -30,6 +30,13 @@ knitr::opts_chunk$set(echo = TRUE,
 - [Fuente de datos: *datos.gov.co*](https://www.datos.gov.co/Agricultura-y-Desarrollo-Rural/Resultados-de-An-lisis-de-Laboratorio-Suelos-en-Co/ch4u-f3i5)
 - <tred>Datos descargados el 31 de diciembre de 2019.</tred>
 
+# Objetivos
+
+- Explorar la situación actual de la composición química del suelo en Colombia.
+- Evidenciar si existen diferencias entre regiones que sugieran cultivos de mayor potencial en determinadas zonas.
+- Verificar qué tan homogéneas son las condiciones edáficas para cultivos que estén localizados en diferentes regiones.
+- Implementar métodos de aprendizaje no supervisado (métodos estadísticos multivariados) que permitan hallar patrones de comportamiento subyacentes en los datos.
+
 # Metodología
 
 1. Importación de datos
@@ -39,7 +46,8 @@ knitr::opts_chunk$set(echo = TRUE,
     2.3 Unificación de niveles de factores (variables categóricas).     
     2.4 Eliminación de símbolos en variables numéricas.   
     2.5 Coerción de variables.    
-    2.6 Edición de nombres de variables (no se tienen en cuenta tildes por viabilidad de análisis).
+    2.6 Edición de nombres de variables (no se tienen en cuenta tildes por viabilidad de análisis).    
+    2.7 Filtrado de datos atípicos (errados) para variables químicas y físicas de suelo. Este filtro se aplicó basado en literatura y percentiles.
 
 # Resultados {.tabset .tabset-fade .tabset-pills}
 
@@ -196,18 +204,30 @@ datos2 <- datos1 %>%
          CICE = capacidad.de.intercambio.cationico..CICE..suma.de.bases.cmol....kg,
          conductividad = Conductividad.el.ctrica..CE..relacion.2.5.1.0.dS.m,
          Fe_olsen_mg_kg = Hierro..Fe..disponible.olsen.mg.kg,
-         Cu_doble1_mg_kg = Cobre..Cu..disponible.doble.acido.mg.kg,
-         Mn_olsen_mg_kg = Manganeso..Mn..disponible.doble.acido.mg.kg,
-         Zn_olsen_mg_kg = Zinc..Zn..disponible.doble..cido.mg.kg,
+         Cu_doble1_mg_kg = Cobre..Cu..disponible.mg.kg,
+         Mn_olsen_mg_kg = Manganeso..Mn..disponible.Olsen.mg.kg,
+         Zn_olsen_mg_kg = Zinc..Zn..disponible.Olsen.mg.kg,
          B_mg_kg = Boro..B..disponible.mg.kg,
          Fe_doble_mg_kg = Hierro..Fe..disponible.doble..cido.mg.kg,
          Cu_doble2_mg_kg = Cobre..Cu..disponible.doble.acido.mg.kg,
          Mn_doble_mg_kg = Manganeso..Mn..disponible.doble.acido.mg.kg,
-         Zn_doble_mg_kg = Zinc..Zn..disponible.doble..cido.mg.kg)
+         Zn_doble_mg_kg = Zinc..Zn..disponible.doble..cido.mg.kg) %>% 
+  # Punto 2.7
+  filter(materia_org > 0) %>% 
+  filter(P_mg_kg <= 100) %>% 
+  filter(S_mg_kg <= 50) %>% 
+  filter(Fe_olsen_mg_kg <= 1000) %>% 
+  filter(Cu_doble1_mg_kg <= 10) %>% 
+  filter(Zn_olsen_mg_kg <= 20) %>% 
+  # Finalizando depuración
+  select(-Zn_doble_mg_kg) %>% 
+  droplevels()
+  
 datos2
 ```
 
 ## 3. Análisis descriptivo
+
 
 ## 4. Análisis exploratorio
 
