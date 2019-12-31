@@ -1,6 +1,6 @@
 ---
-title: "Plantilla Notebook RMarkdown"
-subtitle: "Mi plantilla 1"
+title: "Análisis de Suelos en Colombia"
+subtitle: "Análisis Estadístico (parte I)"
 author: "Edimer David Jaramillo"
 output:
   html_notebook:
@@ -23,17 +23,31 @@ knitr::opts_chunk$set(echo = FALSE,
 
 <img src="img/science.png" style="position:absolute;top:0px;right:30px; width:150px" />
 
+<center><img src="img/suelo.png"/></center>
+
 # Datos
 
+- [Fuente de datos: *datos.gov.co*](https://www.datos.gov.co/Agricultura-y-Desarrollo-Rural/Resultados-de-An-lisis-de-Laboratorio-Suelos-en-Co/ch4u-f3i5)
+- <tred>Datos descargados el 31 de diciembre de 2019.</tred>
+
 # Metodología
+
+1. Importación de datos
+2. Depuración, estructuración e integración de datos.
 
 # Resultados {.tabset .tabset-fade .tabset-pills}
 
 ## 1. Lectura de datos
 
-## 2. Análisis exploratorio
+```{r}
 
-## 3. Modelos
+```
+
+## 2. Depuración, Estructuración e Integración
+
+## 3. Análisis exploratorio
+
+## 4. Modelos
 
 ## 4. Referencias
 
