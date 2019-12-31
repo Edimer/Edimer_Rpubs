@@ -40,7 +40,7 @@ knitr::opts_chunk$set(echo = TRUE,
 # Metodología
 
 1. Importación de datos
-2. Depuración, estructuración e integración de datos.  
+2. Depuración, estructuración e integración de datos  
     2.1 Selección de variables de interés.       
     2.2 Unificación de mayúsuculas a minúsculas.   
     2.3 Unificación de niveles de factores (variables categóricas).     
@@ -48,6 +48,11 @@ knitr::opts_chunk$set(echo = TRUE,
     2.5 Coerción de variables.    
     2.6 Edición de nombres de variables (no se tienen en cuenta tildes por viabilidad de análisis).    
     2.7 Filtrado de datos atípicos (errados) para variables químicas y físicas de suelo. Este filtro se aplicó basado en literatura y percentiles.
+3. Información general
+4. Análisis descriptivo
+5. Análisis exploratorio
+6. Aprendizaje no supervisado
+7. Referencias
 
 # Resultados {.tabset .tabset-fade .tabset-pills}
 
@@ -226,12 +231,67 @@ datos2 <- datos1 %>%
 datos2
 ```
 
-## 3. Análisis descriptivo
+## 3. Información general
 
+- Inicialmente la base de datos (sin depurar) contaba con `r nrow(datos1)` filas, sin embargo, después de depurada se tienen `r nrow(datos2)`. El total de registros están distribuidos de la siguiente manera:
+    - **Departamentos:** información de `r length(levels(datos2$Departamento))` departamentos.
+    - **Municipios:** información de `r length(levels(datos2$Municipio))` municipios.
+    - **Cultivos:** información de `r length(levels(datos2$Cultivo))` culivos.
+    - **Estado del cultivo:** 
+        - Establecido
+        - Por establecer
+        - No indica
+    - **Tiempo de establecido el cultivo:**
+        - 0 a 1 año
+        - 1 a 5 años
+        - 5 a 10 años
+        - Más de 10 años
+        - No aplica
+        - No indica
+    - **Topografía:**
+        - Ligeramente ondulado
+        - Moderadamente ondulado
+        - Ondulado
+        - Ondulado y pendiente
+        - Pendiente
+        - Pendiente fuerte
+        - Pendiente leve
+        - Pendiente moderada
+        - Plano
+        - Plano y ondulado
+        - Plano y pendiente
+        - No indica
+        - <tred>Error.</tred> 212 registros presentan la categoría *"Error"* en esta variable.
+    - **Drenaje:**
+        - Bueno
+        - Malo
+        - Regular
+        - No indica
+        - <tred>Error.</tred> 21433 registros presentan la categoría *"Error"* en esta variable.
+    - **Riego:**
+        - Aspersión
+        - Aspersión y goteo
+        - Aspersión y gravedad
+        - Cañón
+        - Goteo
+        - Goteo y gravedad
+        - Gravedad
+        - Manguera
+        - Microaspersión
+        - No cuenta con riego
+        - Por inundación
+        - No indica
+    - **Fertilizantes:** información de `r length(levels(datos2$fertilizantes))` tipos de fertilización diferente.
 
-## 4. Análisis exploratorio
+## 4. Análisis descriptivo
+    
+## 5. Análisis exploratorio
 
-## 5. Modelos
+## 6. Aprendizaje no supervisado
 
-## 6. Referencias
+### Componentes principales
+
+### Análisis de cluster
+
+## 7. Referencias
 
