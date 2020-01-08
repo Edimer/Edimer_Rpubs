@@ -1,0 +1,61 @@
+---
+title: "Modelos Lineales"
+subtitle: "Mínimos Cuadrados"
+author: "[Edimer David Jaramillo](https://edimer.github.io/)"
+date: "`r Sys.Date()`"
+output:
+  xaringan::moon_reader:
+    css: style_xaringan_2.css
+    nature:
+      countIncrementalSlides: yes
+      highlightLines: yes
+      highlightStyle: github
+      ratio: 16:9
+---
+class: rstudio-slide, left, rstudio-overview
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+knitr::opts_chunk$set(echo = TRUE,
+                      warning = FALSE,
+                      message = FALSE,
+                      fig.align = "center", 
+                      fig.width = 6, fig.height = 4)
+```
+
+# Recurso de información
+
+- [The Elements of Statistical Learning: Data Mining, Inference, and Prediciont.](https://web.stanford.edu/~hastie/ElemStatLearn/)
+
+```{r, echo=FALSE, out.width="290px"}
+knitr::include_graphics("https://pbs.twimg.com/media/C6-1zRtWsAAKRcG.jpg")
+```
+
+---
+class: rstudio-slide, left
+# Statistical Learning
+
+- Aprendizaje desde los datos.
+- Tipos de aprendizaje:
+    - Supervisado
+        - Problemas de regresión (respuesta cuantitativa)
+        - Problemas de clasificación (respuesta categórica)
+            - Binaria
+            - Multinomial o multiclase
+    - No supervisado
+        - Reducción de dimensinalidad
+        - Clusterización
+
+---
+class: rstudio-slide, left
+# Introducción
+
+- El modelo lineal posee numerosas asunciones (suposiciones matemáticas).
+- Proporciona estabilidad, sin embargo, puede producir predicciones imprecisas.
+- 
+
+---
+class: rstudio-slide, left
+# Modelo Lineal
+
+
