@@ -4,7 +4,7 @@
     <title>Modelos Lineales</title>
     <meta charset="utf-8" />
     <meta name="author" content="Edimer David Jaramillo" />
-    <meta name="date" content="2020-01-08" />
+    <meta name="date" content="2020-01-09" />
     <link rel="stylesheet" href="style_xaringan_2.css" type="text/css" />
   </head>
   <body>
@@ -14,25 +14,18 @@ class: center, middle, inverse, title-slide
 # Modelos Lineales
 ## Mínimos Cuadrados
 ### <a href="https://edimer.github.io/">Edimer David Jaramillo</a>
-### 2020-01-08
+### 2020-01-09
 
 ---
 
-class: rstudio-slide, left, rstudio-overview
 
 
-
-# Recurso de información
-
-- [The Elements of Statistical Learning: Data Mining, Inference, and Prediciont.](https://web.stanford.edu/~hastie/ElemStatLearn/)
-
-&lt;img src="https://pbs.twimg.com/media/C6-1zRtWsAAKRcG.jpg" width="290px" style="display: block; margin: auto;" /&gt;
 
 ---
 class: rstudio-slide, left
 # Statistical Learning
 
-- Aprendizaje desde los datos.
+- &lt;tsub&gt;Aprendizaje desde los datos.&lt;/tsub&gt;
 - Tipos de aprendizaje:
     - Supervisado
         - Problemas de regresión (respuesta cuantitativa)
@@ -47,13 +40,64 @@ class: rstudio-slide, left
 class: rstudio-slide, left
 # Introducción
 
-- El modelo lineal posee numerosas asunciones (suposiciones matemáticas).
+- Posee numerosas asunciones (suposiciones matemáticas).
 - Proporciona estabilidad, sin embargo, puede producir predicciones imprecisas.
-- 
+- Pilar fundamental del análisis estadístico.
+- Dado un vector de entradas `\(X^T = (X_1, X_2,..., X_p)\)` se predice la variable `\(Y\)` bajo el siguiente modelo:
+`$$\hat{Y} = \beta_0 +\sum_{j=1}^{p}X_j\beta_j$$`
 
 ---
 class: rstudio-slide, left
-# Modelo Lineal
+# Términos del modelo
+
+- `\(\beta_0\)`: intercepto. Conocido como *bias* (*sesgo*) en Machine Learning.
+- Incluyendo `\(\beta_0\)` en el vector de coeficientes `\(\beta\)`, el modelo lineal puede ser escrito en forma de vector como un producto interno: `\(\hat{Y}=X^T\beta\)`.
+- `\(X^T\)`: vector o matriz transpuesta (*inputs*)
+- `\(\hat{Y}\)`: variable respuesta (*outputs*). En caso de tener una sola variable respuesta, ésta será un escalar, aunque `\(\hat{Y}\)` puede ser un vector de longitud `\(K\)`, en cuyo caso `\(\beta\)` será una matriz de coeficientes de dimensiones `\(p \times K\)`.
+- En el espacio dimensional `\(p+1\)` los *input-output* `\((X, \hat{Y})\)` representan un hiperplano.
+- Visto como una función sobre el espacio de entrada `\(p-dimensional\)`, `\(f(X) = X^T\beta\)`, es lineal.  
+
+---
+class: rstudio-slide, left
+# Ajuste del modelo
+
+- ¿Cómo ajustar el modelo lineal en un conjunto de datos de *training*?
+- Múltiples métodos diferentes de ajuste, siendo uno de los más populares el de [*mínimos cuadrados.*](https://link.springer.com/referenceworkentry/10.1007/978-0-387-32833-1_228)
+- Bajo esta aproximación, elegimos los coeficientes `\(\beta\)` que minimicen la suma de cuadrados residual (*Residual Sum of Squares - RSS*): `$$RSS(\beta) = \sum_{i=1}^{N}(y_i-x_i^T\beta)^2$$`
+- `\(RSS(\beta)\)` es una función cuadrática de los parámetros, y por lo tanto este mínimo siempre existe, pero puede no ser único.
+
+---
+class: rstudio-slide, left
+# RSS Matricial
+
+- En notación matricial se puede escribir: `$$RSS(\beta) = (y - X\beta)^T(y - X\beta)$$`
+- `\(X\)` es una matriz `\(N \times p\)` con cada fila como un vector de entradas y `\(y\)` es un vector de salidas en el conjunto de datos de entrenamiento.
+- Diferenciando respecto a `\(\beta\)` se obtienen las [*ecuaciones normales:*](https://link.springer.com/referenceworkentry/10.1007%2F978-0-387-32833-1_286) `$$X^T(y-X\beta) = 0$$`
+- Si `\(X^TX\)` es &lt;tsub&gt;[no singular](https://es.wikipedia.org/wiki/Singularidad_matem%C3%A1tica)&lt;/tsub&gt;, entonces la única solución está dada por: `$$\hat{\beta}=(X^TX)^{-1}X^Ty$$`
+
+---
+class: rstudio-slide, left
+# Recurso de información - Teoría
+
+- [The Elements of Statistical Learning: Data Mining, Inference, and Prediciont.](https://web.stanford.edu/~hastie/ElemStatLearn/)
+
+&lt;img src="https://pbs.twimg.com/media/C6-1zRtWsAAKRcG.jpg" width="310px" style="display: block; margin: auto;" /&gt;
+
+---
+class: rstudio-slide, left
+# Recurso de información - Práctica
+
+- [An Introduction to Statistical Learning: with Applications in R](http://faculty.marshall.usc.edu/gareth-james/ISL/)
+
+&lt;img src="http://faculty.marshall.usc.edu/gareth-james/ISL/ISL%20Cover%202.jpg" width="310px" style="display: block; margin: auto;" /&gt;
+
+---
+class: rstudio-slide, left
+# Recurso de información - Conceptos
+
+- [*The Concise Encyclopedia of Statistics - Springer*](https://link.springer.com/referencework/10.1007/978-0-387-32833-1)
+
+&lt;img src="https://media.springernature.com/w306/springer-static/cover-hires/book/978-0-387-32833-1" width="250px" style="display: block; margin: auto;" /&gt;
     </textarea>
 <style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
 <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
