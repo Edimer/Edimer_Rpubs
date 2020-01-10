@@ -1,0 +1,55 @@
+---
+title: "Análisis de Regresión con R"
+subtitle: "Regresión Simple y Múltiple"
+author: "Edimer David Jaramillo"
+output:
+  html_notebook:
+    css: css/estilo.css
+    theme: cosmo
+    highlight: zenburn
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      warning = FALSE,
+                      error = FALSE,
+                      message = FALSE,
+                      fig.align = "center",
+                      fig.width = 8.5,
+                      fig.height = 5,
+                      collapse = TRUE)
+```
+
+<img src="img/science.png" style="position:absolute;top:0px;right:30px; width:150px" />
+
+# Artículo científico
+
+<center>
+<img src = "img/paper.png" />
+</center>
+
+# Datos
+
+- Datos tomados del artículo referenciado previamente.
+- [Fuente de datos](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0225413#pone-0225413-g001)
+
+
+# Objetivos
+
+- Replicar análisis estadísticos aplicados en el artículo científico de interés.
+- Evidenciar la relación existente entre características anatómicas de atletas vs rendimiento en salto largo.
+- Evaluar otros métodos de [*statistical learning*](https://edimer.github.io/documents_R/LinearModels_LeastSquares/LinearModels_LeastSqauares.html#1) y compararlos con los resultados obtenidos por los autores.
+
+# Resultados del *paper*
+
+- Aunque fueron numerosos los resultados obtenidos por los autores, para el objetivo de este documento se destacan los siguientes:
+    - La relación entre el área transversal relativa (CSA) del recto abdominal (AR) del lado de la pierna de despegue y el mejor registro personal para el salto largo.
+        - **Correlación:** 0.674
+        - **Valor p:** 0.004 (estadísticamente significativo)
+
+- Las correlaciones (con intervalo de confianza del 95%) se presentan en la siguiente tabla:
+
+<center>
+<img src = "img/correlations.png" />
+</center>
