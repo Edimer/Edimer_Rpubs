@@ -8,6 +8,7 @@ output:
     theme: cosmo
     highlight: zenburn
     df_print: paged
+    code_folding: hide
 ---
 
 ```{r setup, include=FALSE}
@@ -53,3 +54,37 @@ knitr::opts_chunk$set(echo = TRUE,
 <center>
 <img src = "img/correlations.png" />
 </center>
+
+# Lectura de datos
+
+```{r}
+library(readxl)
+library(tidyverse)
+datos <- read_xlsx("../data/Data_Paper_Plos_One_Muscle.xlsx", skip = 3,
+                   na = "N/A", n_max = 47) %>% 
+  rename(RA_takeof_leg = RA...7,
+         OB_takeof_leg = OB...8,
+         PM_takeof_leg = PM...9,
+         QL_takeof_leg = QL...10,
+         ES_takeof_leg = ES...11,
+         Gmax_takeof_leg = Gmax...12,
+         Gmed_takeof_leg = Gmed...13,
+         IL_takeof_leg = IL...14,
+         RA_free_leg = RA...15,
+         OB_free_leg = OB...16,
+         PM_free_leg = PM...17,
+         QL_free_leg = QL...18,
+         ES_free_leg = ES...19,
+         Gmax_free_leg = Gmax...20,
+         Gmed_free_leg = Gmed...21,
+         IL_free_leg = IL...22,
+         id = ID,
+         edad = `Age (years)`,
+         altura_cm = `Height (cm)`,
+         imc = `Body mass (kg)`,
+         dist_salto_cm = `long jump distance (cm)`,
+         sprint_100m_seconds = `100-m sprint time (s)`,
+         grasa_subcut_cm2 = `Subcutaneous fat CSA (absolute value, cm2)`)
+datos
+```
+
