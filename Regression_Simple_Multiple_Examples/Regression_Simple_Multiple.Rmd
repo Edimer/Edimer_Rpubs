@@ -1,6 +1,6 @@
 ---
 title: "Análisis de Regresión con R"
-subtitle: "Regresión Simple y Múltiple"
+subtitle: "Regresión Lineal Simple y Múltiple"
 author: "Edimer David Jaramillo"
 output:
   html_notebook:
@@ -105,9 +105,48 @@ library(ggplot2)
 datos %>% 
   ggplot(data = ., aes(x = RA_takeof_leg, y = dist_salto_cm)) +
   geom_point(size = 3) +
-  labs(x = expression('Relative CSA of RA takeoff leg side - cm'^"2"/'kg'^"2/3)"),
+  labs(x = expression('Relative CSA of RA takeoff leg side - cm'^"2"/'kg'^"2/3"),
        y = "Personal best record of long jump (cm)") +
   geom_smooth(method = "lm", se = FALSE, lty = 3, lwd = 1, color = "black") +
   theme_light()
 ```
 
+## Predichos vs Reales (*paper*)
+
+<center>
+<img src = "img/paper3.png" width="400" />
+</center>
+
+# Resultados adicionales con R
+
+## Distribuciones
+
+## Gráficos cuantil cuantil
+
+## Shapiro Wilk
+
+Se comprueba la normalidad de las variables ($\alpha = 0.05$), bajo el siguiente juego de hipótesis:
+
+$$H_0: X \sim N(\mu, \sigma^2)\\
+H1: x \nsim N(\mu, \sigma^2)$$
+
+## Comparativos
+
+- Se comparan registros  de *cross-sectional area (CSA)* de la pierna de despeque (*takeoff*) vs la pierna libre (*free*). Las variables (músculos) a comparar son las siguientes:
+    - **RA:** recto abdominal.
+    - **OB:** oblicuos internos y externos.
+    - **PM:** psoas mayor.
+    - **QL:** cuadrado lumbar.
+    - **ES:** erector *spinae*.
+    - **Gmax:** gluteo mayor.
+    - **Gmed:** gluteos medio y mínimo.
+    - **IL:** iliaco
+    
+## Matriz de correlaciones
+
+- Se construye la matriz de correlaciones.
+- La variable que presente mayor correlación lineal con la longitud del salto, será tenida en cuenta para estructurar el *modelo de regresión lineal simple (RLS)*. Con las demás variables se construye el *modelo de regresión lineal múltiple (RLM)*.
+- Para la construcción del modelo de *RLM* se comprueba la multicolinealidad de las variables y se proponen tres alternativas:
+    - Eliminación de variables por [*factor inflacionario de varianza.*](https://es.wikipedia.org/wiki/Factor_de_inflaci%C3%B3n_de_la_varianza)
+    - Regresión por componentes principales.
+    - Regresión regularizada ([*Ridge* y *Lasso*](https://en.wikipedia.org/wiki/Regularized_least_squares))
