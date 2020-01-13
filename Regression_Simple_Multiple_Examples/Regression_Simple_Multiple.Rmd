@@ -34,26 +34,7 @@ knitr::opts_chunk$set(echo = TRUE,
 
 - Datos tomados del artículo referenciado previamente.
 - [Fuente de datos](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0225413#pone-0225413-g001)
-
-
-# Objetivos
-
-- Replicar análisis estadísticos aplicados en el artículo científico de interés.
-- Evidenciar la relación existente entre características anatómicas de atletas vs rendimiento en salto largo.
-- Evaluar otros métodos de [*statistical learning*](https://edimer.github.io/documents_R/LinearModels_LeastSquares/LinearModels_LeastSqauares.html#1) y compararlos con los resultados obtenidos por los autores.
-
-# Resultados del *paper*
-
-- Aunque fueron numerosos los resultados obtenidos por los autores, para el objetivo de este documento se destacan los siguientes:
-    - La relación entre el área transversal relativa (CSA) del recto abdominal (AR) del lado de la pierna de despegue y el mejor registro personal para el salto largo.
-        - **Correlación:** 0.674
-        - **Valor p:** 0.004 (estadísticamente significativo)
-
-- Las correlaciones (con intervalo de confianza del 95%) se presentan en la siguiente tabla:
-
-<center>
-<img src = "img/correlations.png" />
-</center>
+- <tred>**Nota:**</tred> los análisis no arrojan exactamente los mismos resultados porque se tienen valores ausentes en algunas variables.
 
 # Lectura de datos
 
@@ -86,5 +67,47 @@ datos <- read_xlsx("../data/Data_Paper_Plos_One_Muscle.xlsx", skip = 3,
          sprint_100m_seconds = `100-m sprint time (s)`,
          grasa_subcut_cm2 = `Subcutaneous fat CSA (absolute value, cm2)`)
 datos
+```
+
+# Objetivos
+
+- Replicar análisis estadísticos aplicados en el artículo científico de interés.
+- Evidenciar la relación existente entre características anatómicas de atletas vs rendimiento en salto largo.
+- Evaluar otros métodos de [*statistical learning*](https://edimer.github.io/documents_R/LinearModels_LeastSquares/LinearModels_LeastSqauares.html#1) y compararlos con los resultados obtenidos por los autores.
+
+# Resultados del *paper* 
+
+## Correlaciones 
+
+- Aunque fueron numerosos los resultados obtenidos por los autores, para el objetivo de este documento se destacan los siguientes:
+    - La relación entre el área transversal relativa (CSA) del recto abdominal (AR) del lado de la pierna de despegue y el mejor registro personal para el salto largo.
+        - **Correlación:** 0.674
+        - **Valor p:** 0.004 (estadísticamente significativo)
+
+- Las correlaciones (con intervalo de confianza del 95%) se presentan en la siguiente tabla:
+
+<center>
+<img src = "img/correlations.png"/>
+</center>
+
+## Gráfico de dispersión {.tabset .tabset-fade .tabset-pills}
+
+### Original
+
+<center>
+<img src = "img/paper2.png" width="400" />
+</center>
+
+### Réplica con R
+
+```{r}
+library(ggplot2)
+datos %>% 
+  ggplot(data = ., aes(x = RA_takeof_leg, y = dist_salto_cm)) +
+  geom_point(size = 3) +
+  labs(x = expression('Relative CSA of RA takeoff leg side - cm'^"2"/'kg'^"2/3)"),
+       y = "Personal best record of long jump (cm)") +
+  geom_smooth(method = "lm", se = FALSE, lty = 3, lwd = 1, color = "black") +
+  theme_light()
 ```
 
