@@ -18,8 +18,7 @@ knitr::opts_chunk$set(echo = TRUE,
                       message = FALSE,
                       fig.align = "center",
                       fig.width = 8.5,
-                      fig.height = 5,
-                      collapse = TRUE)
+                      fig.height = 5)
 ```
 
 <img src="img/science.png" style="position:absolute;top:0px;right:30px; width:150px" />
@@ -144,7 +143,7 @@ datos %>%
 
 ## Gráficos cuantil cuantil
 
-```{r, fig.height=10, fig.align="center"}
+```{r, fig.height=10}
 library(qqplotr)
 datos %>% 
   select_if(is.numeric) %>% 
@@ -217,8 +216,13 @@ datos %>%
   summarise(valor = list(valor)) %>% 
   ungroup() %>% 
   group_by(variable) %>% 
-  mutate(shapiro_valorP = shapiro.test(unlist(valor))$p.value)
+  mutate(shapiro_valorP = round(shapiro.test(unlist(valor))$p.value, digits = 5),
+         Resultado = if_else(shapiro_valorP <= 0.05, true = "No normalidad",
+                             false = "Sí normalidad"))  %>% 
+  select(-valor)
 ```
+
+- <tred>**Nota:**</tred> aunque los autores mencionan que fueron aplicadas las pruebas de *Shapiro Wilk* para comprobar el supuesto de normalidad, en la tabla anterior se evidencia que algunas variables (*ej.*  distancia de salto, grasa subcutanea, entre otras) no se distribuyen de forma normal. Este resultado tiene connotaciones de importancia, ya que las correlaciones podrían ser obtenidas mediante métodos *no paramétricos*.
     
 ## Matriz de correlaciones
 
@@ -226,4 +230,23 @@ datos %>%
 - La variable que presente mayor correlación lineal con la longitud del salto, será tenida en cuenta para estructurar el *modelo de regresión lineal simple (RLS)*. Con las demás variables se construye el *modelo de regresión lineal múltiple (RLM)*.
 - Para la construcción del modelo de *RLM* se comprueba la multicolinealidad de las variables y se proponen dos alternativas:
     - Eliminación de variables por [*factor inflacionario de varianza.*](https://es.wikipedia.org/wiki/Factor_de_inflaci%C3%B3n_de_la_varianza)
-    - Regresión por componentes principales. 
+    - Regresión por componentes principales.
+    
+```{r, fig.width=9, fig.height=8}
+library(corrplot)
+library(RColorBrewer)
+datos %>% 
+  select_if(is.numeric) %>% 
+  select(-id) %>% 
+  cor(use = "complete.obs") %>% 
+  corrplot(method = "pie",
+           type = "upper",
+           diag = FALSE,
+           tl.cex = 0.8,
+           tl.srt = 45,
+           addgrid.col = "black",
+           order = "hclust",
+           col = brewer.pal(n = 10, name = "Spectral"))
+```
+    
+- <tred>**Nota:**</tred> se evidencia alta correlación entre algunas variables. Este patrón sugiere problemas de *multicolinealidad* al ajustar un modelo de *RLM*.
