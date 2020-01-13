@@ -1,6 +1,6 @@
 ---
 title: "Análisis de Regresión con R"
-subtitle: "Regresión Lineal Simple y Múltiple"
+subtitle: "Comparación de modelos de regresión con R"
 author: "Edimer David Jaramillo"
 output:
   html_notebook:
