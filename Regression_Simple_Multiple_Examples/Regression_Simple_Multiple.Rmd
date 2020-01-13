@@ -32,7 +32,7 @@ knitr::opts_chunk$set(echo = TRUE,
 # Datos
 
 - Datos tomados del artículo referenciado previamente.
-- [Fuente de datos](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0225413#pone-0225413-g001)
+- [Fuente de datos - Artículo en PLOS | ONE.](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0225413#pone-0225413-g001)
 - En la base de datos se tienen dos grupos bajo análisis:
     - **Grupo *Long jumpers*:** id 1 a 23.
     - **Grupo *untrained men*:** id 24-45.
@@ -226,11 +226,8 @@ datos %>%
     
 ## Matriz de correlaciones
 
-- Se construye la matriz de correlaciones (método de *Pearson).
+- Se construye la matriz de correlaciones (método de *Pearson*).
 - La variable que presente mayor correlación lineal con la longitud del salto, será tenida en cuenta para estructurar el *modelo de regresión lineal simple (RLS)*. Con las demás variables se construye el *modelo de regresión lineal múltiple (RLM)*.
-- Para la construcción del modelo de *RLM* se comprueba la multicolinealidad de las variables y se proponen dos alternativas:
-    - Eliminación de variables por [*factor inflacionario de varianza.*](https://es.wikipedia.org/wiki/Factor_de_inflaci%C3%B3n_de_la_varianza)
-    - Regresión por componentes principales.
     
 ```{r, fig.width=9, fig.height=8}
 library(corrplot)
@@ -249,4 +246,43 @@ datos %>%
            col = brewer.pal(n = 10, name = "Spectral"))
 ```
     
-- <tred>**Nota:**</tred> se evidencia alta correlación entre algunas variables. Este patrón sugiere problemas de *multicolinealidad* al ajustar un modelo de *RLM*.
+- <tred>**Notas:**</tred> 
+    - Se evidencia alta correlación entre algunas variables. Este patrón sugiere problemas de *multicolinealidad* al ajustar un modelo de *RLM*.
+    - Atletas con mayor altura tienden a presentar saltos de menor distancia. Este comportamiento es obtenido de igual forma en aquellos que aumentan la velocidad del *sprint* al saltar, es decir, que a mayor velocidad, menor longitud de salto.
+    - Atletas con el músculo recto abdominal de mayor longitud, presentan mayores distancias en sus saltos. Con esta variable se ajusta el modelo de *RLS*.
+    
+# Regresión Lineal Simple (RLS) {.tabset .tabset-fade .tabset-pills}
+
+- Se propone cuantificar la unidad de cambio en la distancia del salto vs la longitud (cm^2^/kg^2/3^) del músculo recto abdominal (RA), para la pierna de despegue (*takeoff*).
+- El modelo de *RLS* puede ser expresado de la siguiente manera:
+$$Y = \beta_0\ + \beta_1X \\
+\hat{Y} = \hat{\beta_0}\ + \hat{\beta_1}X\ + \epsilon$$
+- Escrito de cara al fenómeno bajo estudio, el modelo queda expresado como sigue:
+$$Distancia = \hat{\beta_0}\ + (\hat{\beta_1}\times RA) + \epsilon$$
+- Este modelo de *RLS* es ajustado a través del [*Método de Mínimos Cuadrados.*](https://edimer.github.io/documents_R/LinearModels_LeastSquares/LinearModels_LeastSqauares.html#1)
+
+## Modelo Lineal con `lm()`
+
+## Significancia Estadística
+
+## *R^2^* y *R^2^* Ajustado
+
+## Reales vs Predichos
+
+# Regresión Lineal Múltiple (RLM) {.tabset .tabset-fade .tabset-pills}
+
+- Para la construcción del modelo de *RLM* se comprueba la multicolinealidad de las variables y se proponen cuatro alternativas:
+    - <tred>**Modelo 1:**</tred> Modelo de *RLM* con eliminación de variables por valores de correlación.
+    - <tred>**Modelo 2:**</tred> Modelo de *RLM* con eliminación de variables por [*factor inflacionario de varianza.*](https://es.wikipedia.org/wiki/Factor_de_inflaci%C3%B3n_de_la_varianza)
+    - <tred>**Modelo 3:**</tred> Modelo de *RLM* seleccionando predictores con el método *Stepwise* (utilizado por los autores del artículo).
+    - <tred>**Modelo 4:**</tred> Modelo de regresión por componentes principales ([*mínimos cuadrados parciales*](https://en.wikipedia.org/wiki/Partial_least_squares_regression)).
+- Los modelos son comparados a través del *R^2^ ajustado* (mayor mejor) y el *cuadrado medio del error (CME).*
+
+## Modelo 1
+
+## Modelo 2
+
+## Modelo 3
+
+## Modelo 4
+    
