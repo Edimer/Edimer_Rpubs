@@ -34,7 +34,9 @@ knitr::opts_chunk$set(echo = TRUE,
 
 - Datos tomados del artículo referenciado previamente.
 - [Fuente de datos](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0225413#pone-0225413-g001)
-- <tred>**Nota:**</tred> los análisis no arrojan exactamente los mismos resultados porque se tienen valores ausentes en algunas variables.
+- En la base de datos se tienen dos grupos bajo análisis:
+    - **Grupo *Long jumpers*:** id 1 a 23.
+    - **Grupo *untrained men*:** id 24-45.
 
 # Lectura de datos
 
@@ -65,7 +67,9 @@ datos <- read_xlsx("../data/Data_Paper_Plos_One_Muscle.xlsx", skip = 3,
          imc = `Body mass (kg)`,
          dist_salto_cm = `long jump distance (cm)`,
          sprint_100m_seconds = `100-m sprint time (s)`,
-         grasa_subcut_cm2 = `Subcutaneous fat CSA (absolute value, cm2)`)
+         grasa_subcut_cm2 = `Subcutaneous fat CSA (absolute value, cm2)`) %>% 
+  mutate(type = if_else(id %in% c(1:23), true = "Long jumpers",
+                        false = "Untrained men"))
 datos
 ```
 
@@ -121,14 +125,41 @@ datos %>%
 
 ## Distribuciones
 
+```{r, fig.height=10}
+datos %>% 
+  select_if(is.numeric) %>% 
+  select(-id) %>% 
+  gather(key = "variable", value = "valor") %>% 
+  ggplot(data = ., aes(x = valor)) +
+  facet_wrap(facets = ~variable, scales = "free", ncol = 4) +
+  geom_histogram(aes(y = ..density..), bins = 10, color = "black", 
+                 fill = "gray60") +
+  geom_density(fill = "gray50", alpha = 0.18) +
+  geom_rug() +
+  labs(x = "", y = "Densidad") +
+  theme_light() +
+  theme(strip.background = element_rect(fill = "deepskyblue4"),
+        strip.text = element_text(color = "black"))
+```
+
 ## Gráficos cuantil cuantil
 
-## Shapiro Wilk
-
-Se comprueba la normalidad de las variables ($\alpha = 0.05$), bajo el siguiente juego de hipótesis:
-
-$$H_0: X \sim N(\mu, \sigma^2)\\
-H1: x \nsim N(\mu, \sigma^2)$$
+```{r, fig.height=10, fig.align="center"}
+library(qqplotr)
+datos %>% 
+  select_if(is.numeric) %>% 
+  select(-id) %>% 
+  gather(key = "variable", value = "valor") %>% 
+  ggplot(data = ., aes(sample = valor)) +
+  facet_wrap(facets = ~variable, scales = "free", ncol = 4) +
+  geom_qq_band(fill = "gray25") +
+  stat_qq_line(color = "darkgreen") +
+  stat_qq_point(color = "black", size = 0.8) +
+  labs(x = "Cuantiles teóricos", y = "Cuantiles muestrales") +
+  theme_light() +
+  theme(strip.background = element_rect(fill = "deepskyblue4"),
+        strip.text = element_text(color = "black"))
+```
 
 ## Comparativos
 
@@ -141,12 +172,58 @@ H1: x \nsim N(\mu, \sigma^2)$$
     - **Gmax:** gluteo mayor.
     - **Gmed:** gluteos medio y mínimo.
     - **IL:** iliaco
+
+```{r, fig.height=5.5}
+df_takeoff_leg <- datos %>% 
+  select(RA_takeof_leg:IL_takeof_leg) %>% 
+  gather(key = "variable", value = "valor") %>% 
+  mutate(tipo = "TakeoffLeg")
+
+df_free_leg <- datos %>% 
+  select(RA_free_leg:IL_free_leg) %>% 
+  gather(key = "variable", value = "valor") %>% 
+  mutate(tipo = "FreeLeg")
+
+df_takeoff_free <- df_takeoff_leg %>% 
+  bind_rows(df_free_leg)
+
+df_takeoff_free %>% 
+  separate(col = variable, into = c("variable", "v1", "v2")) %>% 
+  select(-c(v1, v2))  %>% 
+  ggplot(data = ., aes(x = tipo, y = valor, fill = tipo)) +
+  facet_wrap(facets = ~variable, scales = "free", ncol = 4) +
+  geom_boxplot(color = "black") +
+  scale_fill_manual(values = c("darkgreen", "gold4")) +
+  labs(x = "Tipo de pierna", y = "") +
+  theme_light() +
+  theme(strip.background = element_rect(fill = "deepskyblue4"),
+        strip.text = element_text(color = "black"),
+        legend.position = "none")
+```
+
+## Shapiro Wilk
+
+Se comprueba la normalidad de las variables ($\alpha = 0.05$), bajo el siguiente juego de hipótesis:
+
+$$H_0: X \sim N(\mu, \sigma^2)\\
+H1: x \nsim N(\mu, \sigma^2)$$
+
+```{r}
+datos %>% 
+  select_if(is.numeric) %>% 
+  select(-id) %>% 
+  gather(key = "variable", value = "valor") %>% 
+  group_by(variable) %>% 
+  summarise(valor = list(valor)) %>% 
+  ungroup() %>% 
+  group_by(variable) %>% 
+  mutate(shapiro_valorP = shapiro.test(unlist(valor))$p.value)
+```
     
 ## Matriz de correlaciones
 
-- Se construye la matriz de correlaciones.
+- Se construye la matriz de correlaciones (método de *Pearson).
 - La variable que presente mayor correlación lineal con la longitud del salto, será tenida en cuenta para estructurar el *modelo de regresión lineal simple (RLS)*. Con las demás variables se construye el *modelo de regresión lineal múltiple (RLM)*.
-- Para la construcción del modelo de *RLM* se comprueba la multicolinealidad de las variables y se proponen tres alternativas:
+- Para la construcción del modelo de *RLM* se comprueba la multicolinealidad de las variables y se proponen dos alternativas:
     - Eliminación de variables por [*factor inflacionario de varianza.*](https://es.wikipedia.org/wiki/Factor_de_inflaci%C3%B3n_de_la_varianza)
-    - Regresión por componentes principales.
-    - Regresión regularizada ([*Ridge* y *Lasso*](https://en.wikipedia.org/wiki/Regularized_least_squares))
+    - Regresión por componentes principales. 
