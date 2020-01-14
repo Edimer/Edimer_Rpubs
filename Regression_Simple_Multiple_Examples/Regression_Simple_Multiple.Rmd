@@ -263,11 +263,59 @@ $$Distancia = \hat{\beta_0}\ + (\hat{\beta_1}\times RA) + \epsilon$$
 
 ## Modelo Lineal con `lm()`
 
+```{r}
+mod_rls <- lm(dist_salto_cm ~ RA_takeof_leg, data = datos)
+summary(mod_rls)
+```
+
+- <tred>**Nota:**</tred> el resultado anterior sugiere que la variable `RA_takeof_leg` es estadísticamente significativa ($valor\ p =0.0139$) sobre la variabilidad observada en la distancia del salto. Además, se puede inferir que por cada unidad que aumenta `RA_takeof_leg`, la distancia de salto es 11.928 centímetros mayor. La variable `RA_takeof_leg` explica 22.01% de la variabilidad observada en la distancia de salto.
+
 ## Significancia Estadística
 
-## *R^2^* y *R^2^* Ajustado
+```{r}
+anova(mod_rls)
+```
+
+## Residuales
+
+```{r}
+par(mfrow = c(2, 2))
+plot(mod_rls)
+```
+
+- **Normalidad (Shapiro Wilk) de los residuales:** 
+
+```{r}
+shapiro.test(residuals(mod_rls))
+```
+
+- **Heterocedasticidad - [*Breusch Pagan Test*](https://es.wikipedia.org/wiki/Test_de_Breusch-Pagan):**
+
+```{r}
+library(lmtest)
+bptest(mod_rls)
+```
+
+- Se comprueba que existe normalidad de los residuos y, además, son homocedasticos.
 
 ## Reales vs Predichos
+
+```{r}
+reales <- datos$dist_salto_cm[!is.na(datos$dist_salto_cm)]
+predichos <- mod_rls$fitted.values
+data.frame(
+  Real = reales,
+  Predichos = predichos
+) %>% 
+  ggplot(data = ., aes(x = Predichos, y = Real)) +
+  geom_point() +
+  labs(x = ("Valores predichos de distancia (cm)"),
+       y = "Valores reales de distancia (cm)") +
+  geom_smooth(method = "lm", se = FALSE, lty = 3, lwd = 1, color = "black") +
+  theme_light()
+```
+
+- La correlación entre los **valores reales** y **valores predichos** por el modelo de *RLS* es: `r round(cor(reales, predichos), digits = 3)`; más baja que la reportada por los autores al ajustar un modelo de *RLM*, cuyo valor es igual a 0.892
 
 # Regresión Lineal Múltiple (RLM) {.tabset .tabset-fade .tabset-pills}
 
