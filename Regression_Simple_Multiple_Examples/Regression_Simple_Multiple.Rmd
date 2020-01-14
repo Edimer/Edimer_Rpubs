@@ -475,17 +475,50 @@ predichos_rlm3 <- predict(object = mod_rlm3, newdata = df_predictoras,
 
 # Comparación de modelos
 
-- Se utilizan las siguientes métricas para comparar los modelos:
+- Comunmente se utilizan diferentes métricas para comparar los modelos:
     - [*Coeficiente de determinación ajustado - R^2^ ajustado*](https://en.wikipedia.org/wiki/Coefficient_of_determination)
     - [*Cuadrado Medio del Error (CME)*](https://en.wikipedia.org/wiki/Mean_squared_error)
     - [*Criterio de Información de Akaike (AIC)*](https://en.wikipedia.org/wiki/Akaike_information_criterion)
     - [*Criterio de información bayesiano (BIC)*](https://en.wikipedia.org/wiki/Bayesian_information_criterion)
     - [*Error Porcentual Absoluto Medio - MAPE*](https://en.wikipedia.org/wiki/Mean_absolute_percentage_error)
     - [*Mallows CP*](https://en.wikipedia.org/wiki/Mallows%27s_Cp)
+- Para este caso específico utilizaré el CME:
+
+$$CME = \frac{1}{n}\sum^{n}_{i = 1}(y_i - \hat{y_i})^2$$
 
 ```{r}
+# Cuadrado medio del error
+cme <- function(predichos, real) {
+  cme = mean((real - predichos)^2)
+  return(cme)
+}
 
+# CME de 4 modelos
+cme_rls  <- cme(predichos_rls, reales)
+cme_rlm1 <- cme(predichos_rlm1, reales)
+cme_rlm2 <- cme(predichos_rlm2, reales)
+cme_rlm3 <- cme(predichos_rlm3, reales)
 ```
+
+  - Esta métrica (MSE) está disponible en múltiples biblitecas de R, entre las cuales están `lime`, `MLmetrics`, `mltools`, `hydroGOF`, entre otras.
+
+```{r}
+data.frame(
+  Modelo = c("RLS", "RLM1", "RLM2", "RLM3"),
+  CME    = c(cme_rls, cme_rlm1, cme_rlm2, cme_rlm3)
+) %>% 
+  ggplot(data = ., aes(x = Modelo, y = CME)) +
+  geom_col(width = 0.5, color = "black", fill = "dodgerblue3") +
+  geom_text(aes(label = round(CME, digits = 2)), vjust = -0.2) +
+  theme_light()
+```
+
+# Conclusiones
+
+- Fue posible validar (<tred>aunque no dieran exactamente los mismos resultados</tred>) los métodos estadísticos implementados por los autores que construyeron el *paper*.
+- En congruencia con lo hallado por los investigadores, el mejor modelo de los cuatro que aquí se evaluaron, fue el obtenido a través de *métodos paso a paso* (*Stepwise*) y *VIF* como criterio de exclusión.
+- Es de vital importancia que en forma masiva, las revistas además de ser *open acces*, permitan acceder a soportes de información (como bases de datos) adicionales al documento científico, de tal manera que <tred>la ciencia sea verdaderamente replicable</tred>.
+- Aunque existe similitud en los resultados replicados en este documento respecto al *paper* original, surgen inquietudes de procesamiento estadístico que no son del todo claras.
 
 # Anexos
 
@@ -536,4 +569,5 @@ data.frame(
   theme(axis.text.x = element_text(angle = 45, hjust = 1, color = "black"),
         axis.text.y = element_text(color = "black"))
 ```
+
 
