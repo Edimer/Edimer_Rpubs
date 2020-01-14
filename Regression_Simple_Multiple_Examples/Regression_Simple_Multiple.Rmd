@@ -296,16 +296,22 @@ library(lmtest)
 bptest(mod_rls)
 ```
 
-- Se comprueba que existe normalidad de los residuos y, además, son homocedasticos.
+- **Autocorrelación - *[Test de Durbi Watson](https://es.wikipedia.org/wiki/Estad%C3%ADstico_de_Durbin-Watson)*:**
+
+```{r}
+dwtest(mod_rls)
+```
+
+- Se comprueba que existe normalidad de los residuos, son homocedasticos y no existe autocorrelación de los mismos.
 
 ## Reales vs Predichos
 
 ```{r}
 reales <- datos$dist_salto_cm[!is.na(datos$dist_salto_cm)]
-predichos <- mod_rls$fitted.values
+predichos_rls <- mod_rls$fitted.values
 data.frame(
   Real = reales,
-  Predichos = predichos
+  Predichos = predichos_rls
 ) %>% 
   ggplot(data = ., aes(x = Predichos, y = Real)) +
   geom_point() +
@@ -315,18 +321,71 @@ data.frame(
   theme_light()
 ```
 
-- La correlación entre los **valores reales** y **valores predichos** por el modelo de *RLS* es: `r round(cor(reales, predichos), digits = 3)`; más baja que la reportada por los autores al ajustar un modelo de *RLM*, cuyo valor es igual a 0.892
+- La correlación entre los **valores reales** y **valores predichos** por el modelo de *RLS* es: `r round(cor(reales, predichos_rls), digits = 3)`; más baja que la reportada por los autores al ajustar un modelo de *RLM*, cuyo valor es igual a 0.892
 
 # Regresión Lineal Múltiple (RLM) {.tabset .tabset-fade .tabset-pills}
 
 - Para la construcción del modelo de *RLM* se comprueba la multicolinealidad de las variables y se proponen cuatro alternativas:
-    - <tred>**Modelo 1:**</tred> Modelo de *RLM* con eliminación de variables por valores de correlación.
-    - <tred>**Modelo 2:**</tred> Modelo de *RLM* con eliminación de variables por [*factor inflacionario de varianza.*](https://es.wikipedia.org/wiki/Factor_de_inflaci%C3%B3n_de_la_varianza)
-    - <tred>**Modelo 3:**</tred> Modelo de *RLM* seleccionando predictores con el método *Stepwise* (utilizado por los autores del artículo).
-    - <tred>**Modelo 4:**</tred> Modelo de regresión por componentes principales ([*mínimos cuadrados parciales*](https://en.wikipedia.org/wiki/Partial_least_squares_regression)).
+    - <tred>**Modelo 0:**</tred> modelo con todas las variables incluidas como predictoras.
+    - <tred>**Modelo 1:**</tred> Modelo de *RLM* con eliminación de variables por valores de correlación y [*factor inflacionario de varianza - VIF.*](https://es.wikipedia.org/wiki/Factor_de_inflaci%C3%B3n_de_la_varianza).
+    - <tred>**Modelo 2:**</tred> Modelo de *RLM* con eliminación de variables por *VIF* a través del métodos *Stepwise* (utilizado por los autores del artículo).
+    - <tred>**Modelo 3:**</tred> Modelo de regresión por componentes principales ([*mínimos cuadrados parciales*](https://en.wikipedia.org/wiki/Partial_least_squares_regression)).
 - Los modelos son comparados a través del *R^2^ ajustado* (mayor mejor) y el *cuadrado medio del error (CME).*
 
+## Modelo 0
+
+```{r}
+mod_rlm0 <- lm(dist_salto_cm ~ .,
+               data = datos %>% select_if(is.numeric) %>% select(-id))
+summary(mod_rlm0)
+```
+
+- El R^2^ ajustado es próximo a 1, sin embargo, pocas variables independientes (predictoras) son estadísticamente significativas ($p<0.05$), patron de comportamiento que sugiere problemas de multicolinealidad. La siguiente gráfica muestra anomalías en los residuales del modelo.
+
+```{r}
+par(mfrow = c(2, 2))
+plot(mod_rlm0)
+```
+
+- Estos resultados evidencian que el modelo ajustado no es adecuado para explicar la variabilidad observada en la distancia de salto. Es importante resaltar que el R^2^ no es la mejor medida de bondad de ajuste, ya que éste aumenta en función del número de predictores.
+
+```{r}
+# Valores predichos por mod_rlm0
+predichos_rlm0 <- mod_rlm0$fitted.values 
+```
+
 ## Modelo 1
+
+- Selección de predictores teniendo en cuenta valores iguales o inferiores a 0.70 de correlación. La selección es posible hacerla con la bibliteca [`usdm`](https://cran.r-project.org/web/packages/usdm/usdm.pdf) que posee funciones flexibles para diagnósticos de multicolinealidad.
+
+```{r}
+# Variables predictoras
+df_predictoras <-datos %>%
+  select_if(is.numeric) %>% dplyr::select(-c(id, dist_salto_cm)) %>% 
+  as.matrix()
+
+library(usdm)
+vifcor(x = df_predictoras, th = 0.70)
+```
+
+- Este resultado muestra que de las 21 variables consideradas en el modelo inicial (*modelo 0*) 10 de ellas presentan problemas de colinealidad. Tomando un límite de 0.70 de correlación como criterio de exclusión de predictores, la correlación máxima presente en las variables seleccionadas, es de 0.68. La tabla anterior muestra los predictores que podrían hacer parte del modelo.
+
+- **Nuevo modelo:**
+
+```{r}
+mod_rlm1 <- lm(dist_salto_cm ~ edad + altura_cm + sprint_100m_seconds
+               + QL_takeof_leg + IL_takeof_leg + RA_free_leg + OB_free_leg
+               + PM_free_leg + Gmed_free_leg + IL_free_leg + grasa_subcut_cm2,
+               data = datos)
+summary(mod_rlm1)
+```
+
+- El R^2^ ajustado es igual a 0.5936 y sólo son estadísticamente significativas las variables altura y sprint. En general, el modelo es estadísticamente significativo ($p = 0.01622$) para explicar la variabilidad en la distancia de salto. 
+
+```{r}
+# Valores predichos por mod_rlm1
+predichos_rlm1 <- mod_rlm1$fitted.values
+```
 
 ## Modelo 2
 
