@@ -161,7 +161,7 @@ datos %>%
         strip.text = element_text(color = "black"))
 ```
 
-## Comparativos
+## Comparativos {.tabset .tabset-fade .tabset-pills}
 
 - Se comparan registros  de *cross-sectional area (CSA)* de la pierna de despeque (*takeoff*) vs la pierna libre (*free*). Las variables (músculos) a comparar son las siguientes:
     - **RA:** recto abdominal.
@@ -172,6 +172,8 @@ datos %>%
     - **Gmax:** gluteo mayor.
     - **Gmed:** gluteos medio y mínimo.
     - **IL:** iliaco
+
+### *Takeoff vs Free*
 
 ```{r, fig.height=5.5}
 df_takeoff_leg <- datos %>% 
@@ -201,6 +203,24 @@ df_takeoff_free %>%
         legend.position = "none")
 ```
 
+### *Long Jumpers vs Untrained Men*
+
+```{r, fig.height=10, fig.width=9}
+datos %>% 
+  dplyr::select(-c(id, dist_salto_cm))  %>% 
+  gather(key = "variable", value = "valor", -type) %>% 
+  ggplot(data = ., aes(x = type, y = valor, fill = type)) +
+  facet_wrap(facets = ~variable, scales = "free", ncol = 3) +
+  geom_boxplot(color = "black") +
+  scale_fill_manual(values = c("darkgreen", "gold4")) +
+  labs(x = "Grupo", y = "") +
+  theme_light() +
+  theme(strip.background = element_rect(fill = "deepskyblue4"),
+        strip.text = element_text(color = "black"),
+        legend.position = "none")
+```
+
+
 ## Shapiro Wilk
 
 Se comprueba la normalidad de las variables ($\alpha = 0.05$), bajo el siguiente juego de hipótesis:
@@ -228,7 +248,7 @@ datos %>%
 ## Matriz de correlaciones
 
 - Se construye la matriz de correlaciones (método de *Pearson*).
-- La variable que presente mayor correlación lineal con la longitud del salto, será tenida en cuenta para estructurar el *modelo de regresión lineal simple (RLS)*. Con las demás variables se construye el *modelo de regresión lineal múltiple (RLM)*.
+- La variable que presente mayor correlación lineal con la longitud del salto, será tenida en cuenta para estructurar el *modelo de regresión lineal simple (RLS)*. Con las demás variables se construyen  *modelos de regresión lineal múltiple (RLM)*.
     
 ```{r, fig.width=9, fig.height=8}
 library(corrplot)
@@ -330,8 +350,7 @@ data.frame(
     - <tred>**Modelo 0 (sobreparametrizado):**</tred> modelo con todas las variables incluidas como predictoras.
     - <tred>**Modelo 1:**</tred> Modelo de *RLM* con eliminación de variables por valores de correlación y [*factor inflacionario de varianza - VIF.*](https://es.wikipedia.org/wiki/Factor_de_inflaci%C3%B3n_de_la_varianza).
     - <tred>**Modelo 2:**</tred> Modelo de *RLM* con eliminación de variables por *VIF* a través del método *Stepwise* (utilizado por los autores del artículo).
-    - <tred>**Modelo 3:**</tred> Modelo de regresión por componentes principales ([*mínimos cuadrados parciales*](https://en.wikipedia.org/wiki/Partial_least_squares_regression)).
-- Los modelos son comparados a través del *R^2^ ajustado* (mayor mejor) y el *cuadrado medio del error (CME).*
+    - <tred>**Modelo 3:**</tred> Modelo de regresión por [*mínimos cuadrados parciales - PLS*](https://en.wikipedia.org/wiki/Partial_least_squares_regression).
 
 ## Modelo 0
 
@@ -369,7 +388,7 @@ library(usdm)
 vifcor(x = df_predictoras, th = 0.70)
 ```
 
-- Este resultado muestra que de las 21 variables consideradas en el modelo inicial (*modelo 0*) 10 de ellas presentan problemas de colinealidad. Tomando un límite de 0.70 de correlación como criterio de exclusión de predictores, la correlación máxima presente en las variables seleccionadas, es de 0.68. La tabla anterior muestra los predictores que podrían hacer parte del modelo.
+- Este resultado muestra que de las 21 variables consideradas en el modelo inicial (*modelo 0*) 10 de ellas presentan problemas de colinealidad. Tomando un límite de 0.70 de correlación como criterio de exclusión de predictores, la correlación máxima presente en las variables seleccionadas es de 0.68. La tabla anterior muestra los predictores que podrían hacer parte del modelo.
 
 - **Nuevo modelo:**
 
@@ -427,8 +446,46 @@ summary(mod_rlm2.1)
 predichos_rlm2 <- mod_rlm2.1$fitted.values
 ```
 
-
 ## Modelo 3
+
+- La función `plsr()` del paquete `pls` permite ajustar modelos con *Partial Least Squares*, además, incluye la posibilidad de recurrir a validación cruzada para identificar el número adecuado de componentes con el cual minimizar el cuadrado medio del error. En este caso particular usé la opción de *cross-validation* y se identifica un sólo componente principal como óptimo. La biblioteca `caret` también permite ajustar modelos de mínimos cuadrados parciales (*PLS*) y regresión por componentes principales (*PCR*).
+
+```{r}
+# Cargando biblioteca
+library(pls)
+
+# Ajustando el modelo con validación cruzada
+set.seed(123)
+mod_rlm3 <- plsr(formula = dist_salto_cm ~ ., 
+                 data = datos %>% select_if(is.numeric) %>% dplyr::select(-id),
+                 scale. = TRUE, validation = "CV")
+
+# Estimando el CME (cuadrado medio del error)
+mod_pls_CV <- MSEP(mod_rlm3, estimate = "CV")
+
+# Número de componentes óptimo
+plot(mod_pls_CV$val, xlab = "Número de componentes", ylab = "CME")
+```
+
+
+```{r}
+predichos_rlm3 <- predict(object = mod_rlm3, newdata = df_predictoras,
+                          ncomp = 1)[1:23]
+```
+
+# Comparación de modelos
+
+- Se utilizan las siguientes métricas para comparar los modelos:
+    - [*Coeficiente de determinación ajustado - R^2^ ajustado*](https://en.wikipedia.org/wiki/Coefficient_of_determination)
+    - [*Cuadrado Medio del Error (CME)*](https://en.wikipedia.org/wiki/Mean_squared_error)
+    - [*Criterio de Información de Akaike (AIC)*](https://en.wikipedia.org/wiki/Akaike_information_criterion)
+    - [*Criterio de información bayesiano (BIC)*](https://en.wikipedia.org/wiki/Bayesian_information_criterion)
+    - [*Error Porcentual Absoluto Medio - MAPE*](https://en.wikipedia.org/wiki/Mean_absolute_percentage_error)
+    - [*Mallows CP*](https://en.wikipedia.org/wiki/Mallows%27s_Cp)
+
+```{r}
+
+```
 
 # Anexos
 
