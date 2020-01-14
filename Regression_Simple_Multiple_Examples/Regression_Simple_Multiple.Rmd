@@ -4,6 +4,7 @@ subtitle: "Comparación de modelos de regresión con R"
 author: "Edimer David Jaramillo"
 output:
   html_notebook:
+    toc: true
     css: css/estilo.css
     theme: cosmo
     highlight: zenburn
@@ -326,9 +327,9 @@ data.frame(
 # Regresión Lineal Múltiple (RLM) {.tabset .tabset-fade .tabset-pills}
 
 - Para la construcción del modelo de *RLM* se comprueba la multicolinealidad de las variables y se proponen cuatro alternativas:
-    - <tred>**Modelo 0:**</tred> modelo con todas las variables incluidas como predictoras.
+    - <tred>**Modelo 0 (sobreparametrizado):**</tred> modelo con todas las variables incluidas como predictoras.
     - <tred>**Modelo 1:**</tred> Modelo de *RLM* con eliminación de variables por valores de correlación y [*factor inflacionario de varianza - VIF.*](https://es.wikipedia.org/wiki/Factor_de_inflaci%C3%B3n_de_la_varianza).
-    - <tred>**Modelo 2:**</tred> Modelo de *RLM* con eliminación de variables por *VIF* a través del métodos *Stepwise* (utilizado por los autores del artículo).
+    - <tred>**Modelo 2:**</tred> Modelo de *RLM* con eliminación de variables por *VIF* a través del método *Stepwise* (utilizado por los autores del artículo).
     - <tred>**Modelo 3:**</tred> Modelo de regresión por componentes principales ([*mínimos cuadrados parciales*](https://en.wikipedia.org/wiki/Partial_least_squares_regression)).
 - Los modelos son comparados a través del *R^2^ ajustado* (mayor mejor) y el *cuadrado medio del error (CME).*
 
@@ -356,7 +357,7 @@ predichos_rlm0 <- mod_rlm0$fitted.values
 
 ## Modelo 1
 
-- Selección de predictores teniendo en cuenta valores iguales o inferiores a 0.70 de correlación. La selección es posible hacerla con la bibliteca [`usdm`](https://cran.r-project.org/web/packages/usdm/usdm.pdf) que posee funciones flexibles para diagnósticos de multicolinealidad.
+- Selección de predictores teniendo en cuenta valores iguales o inferiores a 0.70 de correlación. La selección es posible con la bibliteca [`usdm`](https://cran.r-project.org/web/packages/usdm/usdm.pdf) que posee funciones flexibles para diagnósticos de multicolinealidad.
 
 ```{r}
 # Variables predictoras
@@ -389,7 +390,93 @@ predichos_rlm1 <- mod_rlm1$fitted.values
 
 ## Modelo 2
 
+- Son excluidas variables que presenten *VIF* por encima de 10.
+
+```{r}
+vifstep(x = df_predictoras, th = 10)
+```
+
+- Este método de selección arroja que 6 de las 21 variables totales (`mod_rlm0`) tienen problemas de colinealidad. El modelo considera 15 variables como independientes, con valores máximos de *VIF* que no superan 9.64.
+
+- **Nuevo modelo:**
+
+```{r}
+mod_rlm2 <- lm(dist_salto_cm ~ edad + altura_cm + sprint_100m_seconds
+               + QL_takeof_leg + IL_takeof_leg + RA_free_leg + OB_free_leg
+               + PM_free_leg + Gmed_free_leg + IL_free_leg + grasa_subcut_cm2
+               + ES_takeof_leg + Gmed_takeof_leg + QL_free_leg + Gmax_free_leg,
+               data = datos)
+summary(mod_rlm2)
+```
+
+- El R^2^ ajustado es igual a 0.5486 y sólo son estadísticamente significativas las variables altura y sprint. En general, el modelo no es estadísticamente significativo ($p = 0.08803$) para explicar la variabilidad en la distancia de salto. Dado que aún hay presencia de un número elevado de predictores, se construye el modelo final luego de aplicar el método *Stepwise*, basado en el [*Criterio de Información de Akaike*](https://en.wikipedia.org/wiki/Akaike_information_criterion).
+
+```{r}
+mod_rlm2.1 <- step(object = mod_rlm2, direction = "both")
+```
+
+- Este método sugiere que el mejor modelo alcanza un valor mínimo de *AIC* igual a 153.83, cuando son consideradas las variables altura, sprint, IL_takeoff, RA_free, Gmed_free, IL_free, ES_takeoff y Gmed_takeoff. Son estadísticamente significativas la altura, sprint, IL_takeoff y RA_free; con R^2^ ajustado igual a 0.7186 (<tred>cercano al valor (0.763) reportado por los autores en el paper</tred>).
+
+```{r}
+summary(mod_rlm2.1)
+```
+
+
+```{r}
+# Valores predichos con mod_rlm2.1
+predichos_rlm2 <- mod_rlm2.1$fitted.values
+```
+
+
 ## Modelo 3
 
-## Modelo 4
-    
+# Anexos
+
+## Biblioteca `car`
+
+- Con la biblioteca `car`, haciendo uso de la función vif, es posible conocer los valores del *Factor de Inflación de Varianza*.
+
+```{r}
+library(car)
+vif(mod_rlm0)   # Aplicado sobre modelo sobreparametrizado
+```
+
+- Estos mismos valores se pueden obtener manualmente con la diagonal de la inversa de la matriz de correlaciones.
+
+```{r}
+# Matriz de correlaciones
+mtx_cor <- cor(df_predictoras, use = "complete.obs")
+
+# Inversa de mtx_cor
+inversa_cor <- solve(mtx_cor)
+
+# VIFs
+diag(inversa_cor)
+```
+
+## Biblioteca `mctest`
+
+- Con la biblioteca `mctest` es posible graficar los *VIFs* y valores propios (*Eigen Values*).
+
+```{r}
+library(mctest)
+mc.plot(x = df_predictoras, y = datos$dist_salto_cm, vif = 10)
+```
+
+- El gráfico anterior puede ser construido manualmente con el siguiente código:
+
+```{r}
+data.frame(
+  variable = names(diag(inversa_cor)),
+  VIF      = diag(inversa_cor)
+) %>% 
+  ggplot(data = ., aes(x = variable, y = VIF)) +
+  geom_point() +
+  geom_hline(yintercept = 10, color = "red", lty = 2) +
+  labs(x = "Variable", y = "VIF",
+       title = "Factor Inflacionario de Varianza (VIF)") +
+  theme_light() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, color = "black"),
+        axis.text.y = element_text(color = "black"))
+```
+
