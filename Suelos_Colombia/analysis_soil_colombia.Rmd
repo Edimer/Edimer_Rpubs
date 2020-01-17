@@ -31,6 +31,10 @@ knitr::opts_chunk$set(echo = TRUE,
 - [Fuente de datos: *datos.gov.co*](https://www.datos.gov.co/Agricultura-y-Desarrollo-Rural/Resultados-de-An-lisis-de-Laboratorio-Suelos-en-Co/ch4u-f3i5)
 - <tred>Datos descargados el 31 de diciembre de 2019.</tred>
 
+<center>
+<img src="img/datos_ica.png"/>
+</center>
+
 # Objetivos
 
 - Explorar la situación actual de la composición química del suelo en Colombia.
@@ -298,8 +302,31 @@ as.data.frame(datos2 %>%
           round(quantile(x, probs = seq(0.1, 1, 0.1), na.rm = TRUE), digits = 2)
           }))
 ```
-    
-    
+
+### Resumen numérico por departamento
+
+- **DE:** Desviación Estándar.
+- **CV:** Coeficiente de Variación (%).
+
+```{r}
+library(DT)
+datos2 %>%
+  select(which(sapply(., class) == "numeric"), Departamento) %>%
+  gather(key = "variable", value = "valor",-Departamento) %>%
+  group_by(variable, Departamento) %>%
+  summarise(
+    Promedio = round(mean(valor, na.rm = TRUE), digits = 2),
+    Mínimo = round(min(valor, na.rm = TRUE), digits = 2),
+    Máximo = round(max(valor, na.rm = TRUE), digits = 2),
+    DE = round(sd(valor, na.rm = TRUE), digits = 2),
+    Máximo = round(max(valor, na.rm = TRUE), digits = 2)
+  ) %>%
+  mutate(CV = round((DE / Promedio) * 100, digits = 2)) %>%
+  rename(Variable = variable) %>%
+  datatable()
+```
+
+
 ## 5. Análisis exploratorio
 
 ## 6. Aprendizaje no supervisado
