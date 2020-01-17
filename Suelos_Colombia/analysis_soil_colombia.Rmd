@@ -8,6 +8,7 @@ output:
     theme: cosmo
     highlight: zenburn
     df_print: paged
+    code_folding: hide
 ---
 
 ```{r setup, include=FALSE}
