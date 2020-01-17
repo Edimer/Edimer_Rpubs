@@ -1,6 +1,6 @@
 ---
-title: "Análisis de Suelos en Colombia"
-subtitle: "Análisis Estadístico (parte I)"
+title: "Análisis Físico y Químico de Suelos en Colombia"
+subtitle: "Análisis Estadístico"
 author: "Edimer David Jaramillo"
 output:
   html_notebook:
@@ -65,7 +65,8 @@ knitr::opts_chunk$set(echo = TRUE,
 ## 1. Lectura de datos
 
 ```{r}
-datos1 <- read.csv("../data/Datos_Suelos_Colombia.csv", encoding = "UTF-8")
+url <- "https://www.datos.gov.co/api/views/ch4u-f3i5/rows.csv?accessType=DOWNLOAD"
+datos1 <- read.csv(file = url, encoding = "UTF-8")
 ```
 
 ## 2. Depuración, Estructuración e Integración
@@ -73,7 +74,8 @@ datos1 <- read.csv("../data/Datos_Suelos_Colombia.csv", encoding = "UTF-8")
 ```{r}
 library(Hmisc)
 library(dplyr)
-datos2 <- datos1 %>% 
+suppressWarnings(
+  datos2 <- datos1 %>% 
   # Punto 2.1
   select(-c(numfila, FechaAnalisis, Secuencial)) %>% 
   # Punto 2.2
@@ -234,6 +236,7 @@ datos2 <- datos1 %>%
   # Finalizando depuración
   select(-c(Zn_doble_mg_kg, Fe_doble_mg_kg, Cu_doble2_mg_kg, Mn_doble_mg_kg)) %>% 
   droplevels()
+)
   
 datos2
 ```
@@ -305,6 +308,7 @@ as.data.frame(datos2 %>%
 
 ### Resumen numérico por departamento
 
+- **n:** número de registros.
 - **DE:** Desviación Estándar.
 - **CV:** Coeficiente de Variación (%).
 
@@ -315,7 +319,9 @@ datos2 %>%
   gather(key = "variable", value = "valor",-Departamento) %>%
   group_by(variable, Departamento) %>%
   summarise(
+    n = n(),
     Promedio = round(mean(valor, na.rm = TRUE), digits = 2),
+    Mediana = round(median(valor, na.rm = TRUE), digits = 2),
     Mínimo = round(min(valor, na.rm = TRUE), digits = 2),
     Máximo = round(max(valor, na.rm = TRUE), digits = 2),
     DE = round(sd(valor, na.rm = TRUE), digits = 2),
@@ -326,6 +332,36 @@ datos2 %>%
   datatable()
 ```
 
+### Resumen numérico por municipio
+
+- **n:** número de registros.
+- **DE:** Desviación Estándar.
+- **CV:** Coeficiente de Variación (%).
+- <tred>**Notas:**</tred>
+    - se filtran municipios con 5 o más registros.
+    - Se agrega la columna "Departamento" para saber a qué departamento corresponde el municipio.
+
+```{r, warning=FALSE, message=FALSE, error=FALSE}
+datos2 %>%
+  select(which(sapply(., class) == "numeric"), Municipio, Departamento) %>%
+  gather(key = "variable", value = "valor",-c(Municipio, Departamento)) %>%
+  group_by(variable, Municipio, Departamento) %>%
+  summarise(
+    n = n(),
+    Promedio = round(mean(valor, na.rm = TRUE), digits = 2),
+    Mediana = round(median(valor, na.rm = TRUE), digits = 2),
+    Mínimo = round(min(valor, na.rm = TRUE), digits = 2),
+    Máximo = round(max(valor, na.rm = TRUE), digits = 2),
+    DE = round(sd(valor, na.rm = TRUE), digits = 2),
+    Máximo = round(max(valor, na.rm = TRUE), digits = 2)
+  ) %>%
+  ungroup() %>% 
+  filter(Promedio > 0 & DE > 0) %>% 
+  filter(n >= 5) %>% 
+  mutate(CV = round((DE / Promedio) * 100, digits = 2)) %>%
+  rename(Variable = variable) %>%
+  datatable()
+```
 
 ## 5. Análisis exploratorio
 
