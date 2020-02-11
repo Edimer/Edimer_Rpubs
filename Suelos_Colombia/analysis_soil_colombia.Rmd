@@ -29,7 +29,7 @@ knitr::opts_chunk$set(echo = TRUE,
 # Datos
 
 - [Fuente de datos: *datos.gov.co*](https://www.datos.gov.co/Agricultura-y-Desarrollo-Rural/Resultados-de-An-lisis-de-Laboratorio-Suelos-en-Co/ch4u-f3i5)
-- <tred>Datos descargados el 31 de diciembre de 2019.</tred>
+- <tred>Datos descargados el 11 de febrero de 2020.</tred>
 
 <center>
 <img src="img/datos_ica.png"/>
@@ -314,6 +314,7 @@ as.data.frame(datos2 %>%
 
 ```{r}
 library(DT)
+library(tidyr)
 datos2 %>%
   select(which(sapply(., class) == "numeric"), Departamento) %>%
   gather(key = "variable", value = "valor",-Departamento) %>%
