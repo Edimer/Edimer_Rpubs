@@ -55,7 +55,9 @@ knitr::opts_chunk$set(echo = TRUE,
     2.7 Filtrado de datos atípicos (errados) para variables químicas y físicas de suelo. Este filtro se aplicó basado en literatura y percentiles.
 3. Información general
 4. Análisis descriptivo    
-    4.1 Deciles para cada variable numérica
+    4.1 Deciles para cada variable numérica    
+    4.2 Resumen numérico por departamento    
+    4.3 Resumen numérico por municipio
 5. Análisis exploratorio
 6. Aprendizaje no supervisado
 7. Referencias
