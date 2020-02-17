@@ -1,6 +1,6 @@
 ---
 title: "Asistencia Técnica en Palmira Valle del Cauca - 2017"
-subtitle: "Usos del Machine Learning"
+subtitle: "Usos del Machine Learning en Agricultura"
 author: "Edimer David Jaramillo"
 output:
   html_notebook:
