@@ -286,3 +286,18 @@ gadm_plot(col0) +
        subtitle = "Palmira, Valle del Cauca")
 ```
 
+
+```{r}
+library(plotly)
+ggplotly(
+  gadm_plot(col0) +
+  xlim(-76.5, -76) +
+  ylim(3.2, 3.8) +
+  geom_point(data = datos2 %>% filter(longitud < 0) %>%
+               filter(cultivo == "Plátano"),
+             aes(x = longitud, y = latitud, color = prodn_kg)) +
+  labs(title = "Producción en kg de plátano",
+       subtitle = "Palmira, Valle del Cauca")
+)
+```
+
