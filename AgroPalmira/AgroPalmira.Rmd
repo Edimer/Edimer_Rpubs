@@ -64,3 +64,57 @@ datos1 <- read.csv(file = url, encoding = "UTF-8", dec = ",",
                    na.strings = c("?", "¿"))
 datos1
 ```
+
+
+```{r}
+datos1 %>% 
+  group_by(Corregimiento) %>%
+  count() %>% ggplot(data = ., aes(x = reorder(Corregimiento, n), y = n)) +
+  geom_col() + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+
+```{r}
+datos1 %>% 
+  select(crto = Corregimiento,
+         vereda = Vereda.Sector,
+         area_ha = Area..Has.,
+         altitud = Altura.M.S.N.M.,
+         temperatura = T...C.,
+         pluvi = Pp..Mm.Año.,
+         suelo = Tipo.Suelo,
+         pendiente = Pendiente,
+         niv_tecno = Nivel.Tecnlogico,
+         predio = Tenencia.del.predio,
+         agua_propia = Agua.Propia,
+         acueducto = Acueducto,
+         electri = Energ.Electrica,
+         gas_natural = Gas.Natural,
+         internet = E.Internet,
+         analysis_suelo = Analisis.De.Suelos,
+         cultivo = Cultivo,
+         variedad = Variedad,
+         area_cultivada = Area.Cultivada..Has.,
+         prodn_kg = Produccion..Kg.,
+         p_mercado = X..Al.Mercado,
+         venta = Forma.Venta,
+         pago = Forma.Pago,
+         especie = Especie,
+         raza = Raza,
+         animales = Numero,
+         prodn_animal = Produccion,
+         longitud = Longitud..W.,
+         latitud = Latitud..N.)
+```
+
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
