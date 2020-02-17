@@ -1,6 +1,6 @@
 ---
-title: "Análisis Físico y Químico de Suelos en Colombia"
-subtitle: "Análisis Estadístico"
+title: "Asistencia Técnica en Palmira Valle del Cauca - 2017"
+subtitle: "Usos del Machine Learning"
 author: "Edimer David Jaramillo"
 output:
   html_notebook:
@@ -24,23 +24,18 @@ knitr::opts_chunk$set(echo = TRUE,
 
 <img src="img/science.png" style="position:absolute;top:0px;right:30px; width:150px" />
 
-<center><img src="img/suelo.png"/></center>
+<center><img src="img/agro_datos.jpg"/></center>
 
 # Datos
 
-- [Fuente de datos: *datos.gov.co*](https://www.datos.gov.co/Agricultura-y-Desarrollo-Rural/Resultados-de-An-lisis-de-Laboratorio-Suelos-en-Co/ch4u-f3i5)
-- <tred>Datos descargados el 11 de febrero de 2020.</tred>
+- [Fuente de datos: *datos.gov.co*](https://www.datos.gov.co/Agricultura-y-Desarrollo-Rural/Registro-nico-de-Usuarios-de-Asistencia-T-cnica-RU/e5us-rswm)
+- <tred>Última compilación de este documento: `r Sys.Date()`.</tred>
 
 <center>
-<img src="img/datos_ica.png"/>
+<img src="img/datos_palmira.png"/>
 </center>
 
 # Objetivos
-
-- Explorar la situación actual de la composición química del suelo en Colombia.
-- Evidenciar si existen diferencias entre regiones que sugieran cultivos de mayor potencial en determinadas zonas.
-- Verificar qué tan homogéneas son las condiciones edáficas para cultivos que estén localizados en diferentes regiones.
-- Implementar métodos de aprendizaje no supervisado (métodos estadísticos multivariados) que permitan hallar patrones de comportamiento subyacentes en los datos.
 
 # Metodología
 
@@ -54,12 +49,9 @@ knitr::opts_chunk$set(echo = TRUE,
     2.6 Edición de nombres de variables (no se tienen en cuenta tildes por viabilidad de análisis).    
     2.7 Filtrado de datos atípicos (errados) para variables químicas y físicas de suelo. Este filtro se aplicó basado en literatura y percentiles.
 3. Información general
-4. Análisis descriptivo    
-    4.1 Deciles para cada variable numérica    
-    4.2 Resumen numérico por departamento    
-    4.3 Resumen numérico por municipio
+4. Análisis descriptivo  
 5. Análisis exploratorio
-6. Aprendizaje no supervisado
+6. Machine Learning
 7. Referencias
 
 # Resultados {.tabset .tabset-fade .tabset-pills}
@@ -67,312 +59,8 @@ knitr::opts_chunk$set(echo = TRUE,
 ## 1. Lectura de datos
 
 ```{r}
-url <- "https://www.datos.gov.co/api/views/ch4u-f3i5/rows.csv?accessType=DOWNLOAD"
-datos1 <- read.csv(file = url, encoding = "UTF-8")
+url <- "https://www.datos.gov.co/api/views/e5us-rswm/rows.csv?accessType=DOWNLOAD"
+datos1 <- read.csv(file = url, encoding = "UTF-8", dec = ",",
+                   na.strings = c("?", "¿"))
+datos1
 ```
-
-## 2. Depuración, Estructuración e Integración
-
-```{r}
-library(Hmisc)
-library(dplyr)
-suppressWarnings(
-  datos2 <- datos1 %>% 
-  # Punto 2.1
-  select(-c(numfila, FechaAnalisis, Secuencial)) %>% 
-  # Punto 2.2
-  mutate_at(c("Departamento", "Municipio", "Cultivo", "Estado",
-              "Tiempo.Establecimiento", "Topografia", "Drenaje", "Riego",
-              "Fertilizantes.aplicados"), as.character) %>%
-  mutate_at(c("Departamento", "Municipio", "Cultivo", "Estado",
-              "Tiempo.Establecimiento", "Topografia", "Drenaje", "Riego",
-              "Fertilizantes.aplicados"), tolower) %>% 
-  mutate_at(c("Departamento", "Municipio", "Cultivo", "Estado",
-              "Tiempo.Establecimiento", "Topografia", "Drenaje", "Riego",
-              "Fertilizantes.aplicados"), capitalize) %>% 
-  # Punto 2.3
-  mutate(Topografia = gsub("Error: #n/a", "Error", Topografia),
-         Drenaje = gsub("Buen drenaje", "Bueno", Drenaje),
-         Drenaje = gsub("Muy buen drenaje", "Bueno", Drenaje),
-         Drenaje = gsub("Mal drenaje", "Malo", Drenaje),
-         Drenaje = gsub("Regular drenaje", "Regular", Drenaje),
-         Drenaje = gsub("Error: #n/a", "Error", Drenaje),
-         Cultivo = gsub("Anon", "Anón", Cultivo),
-         Cultivo = gsub("Aromaticas", "Aromáticas", Cultivo),
-         Cultivo = gsub("cidron", "cidrón", Cultivo),
-         Cultivo = gsub("oregano", "orégano", Cultivo),
-         Cultivo = gsub("Arrayan", "Arrayán", Cultivo),
-         Cultivo = gsub("Asai", "Asaí", Cultivo),
-         Cultivo = gsub("Balu", "Balú", Cultivo),
-         Cultivo = gsub("Brocoli", "Brócoli", Cultivo),
-         Cultivo = gsub("Caña panelera/azucar", "Caña/azúcar", Cultivo),
-         Cultivo = gsub("Caña/azucar", "Caña/azúcar", Cultivo),
-         Cultivo = gsub("Citricos", "Cítricos", Cultivo),
-         Cultivo = gsub("Epifitas ", "Epífitas ", Cultivo),
-         Cultivo = gsub("arborea", "arbórea", Cultivo),
-         Cultivo = gsub("Guanabana", "Guanábana", Cultivo),
-         Cultivo = gsub("Mani", "Maní", Cultivo),
-         Cultivo = gsub("Marañon", "Marañón", Cultivo),
-         Cultivo = gsub("Rambutan", "Rambután", Cultivo),
-         Cultivo = gsub("Saman", "Samán", Cultivo)) %>% 
-  # Punto 2.4
-  mutate(pH.agua.suelo.2.5.1.0 = gsub("[< | >]", "", pH.agua.suelo.2.5.1.0),
-         pH.agua.suelo.2.5.1.0 = gsub("[,]", ".", pH.agua.suelo.2.5.1.0),
-         Fósforo..P..Bray.II.mg.kg = gsub("[< | >]", "",
-                                          Fósforo..P..Bray.II.mg.kg),
-         Fósforo..P..Bray.II.mg.kg = gsub("[,]", ".",
-                                          Fósforo..P..Bray.II.mg.kg),
-         Azufre..S..Fosfato.monocalcico.mg.kg = gsub("[< | >]", "",
-                                          Azufre..S..Fosfato.monocalcico.mg.kg),
-         Azufre..S..Fosfato.monocalcico.mg.kg = gsub("[,]", ".",
-                                          Azufre..S..Fosfato.monocalcico.mg.kg),
-         Acidez..Al.H..KCL.cmol....kg = gsub("[< | >]", "",
-                                          Acidez..Al.H..KCL.cmol....kg),
-         Acidez..Al.H..KCL.cmol....kg = gsub("[,]", ".",
-                                          Acidez..Al.H..KCL.cmol....kg),
-         Aluminio..Al..intercambiable.cmol....kg = gsub("[< | >]", "",
-                                          Aluminio..Al..intercambiable.cmol....kg),
-         Aluminio..Al..intercambiable.cmol....kg = gsub("[,]", ".",
-                                          Aluminio..Al..intercambiable.cmol....kg),
-         Calcio..Ca..intercambiable.cmol....kg = gsub("[< | >]", "",
-                                          Calcio..Ca..intercambiable.cmol....kg),
-         Calcio..Ca..intercambiable.cmol....kg = gsub("[,]", ".",
-                                          Calcio..Ca..intercambiable.cmol....kg),
-         Magnesio..Mg..intercambiable.cmol....kg = gsub("[< | >]", "",
-                                          Magnesio..Mg..intercambiable.cmol....kg),
-         Magnesio..Mg..intercambiable.cmol....kg = gsub("[,]", ".",
-                                          Magnesio..Mg..intercambiable.cmol....kg),
-         Potasio..K..intercambiable.cmol....kg = gsub("[< | >]", "",
-                                          Potasio..K..intercambiable.cmol....kg),
-         Potasio..K..intercambiable.cmol....kg = gsub("[,]", ".",
-                                          Potasio..K..intercambiable.cmol....kg),
-         Sodio..Na..intercambiable.cmol....kg = gsub("[< | >]", "",
-                                          Sodio..Na..intercambiable.cmol....kg),
-         Sodio..Na..intercambiable.cmol....kg = gsub("[,]", ".",
-                                          Sodio..Na..intercambiable.cmol....kg),
-         capacidad.de.intercambio.cationico..CICE..suma.de.bases.cmol....kg
-         = gsub("[< | >]", "",
-                capacidad.de.intercambio.cationico..CICE..suma.de.bases.cmol....kg),
-         capacidad.de.intercambio.cationico..CICE..suma.de.bases.cmol....kg
-         = gsub("[,]", ".",
-                capacidad.de.intercambio.cationico..CICE..suma.de.bases.cmol....kg),
-         Conductividad.el.ctrica..CE..relacion.2.5.1.0.dS.m
-         = gsub("[< | >]", "",
-                Conductividad.el.ctrica..CE..relacion.2.5.1.0.dS.m),
-         Conductividad.el.ctrica..CE..relacion.2.5.1.0.dS.m
-         = gsub("[,]", ".",
-                Conductividad.el.ctrica..CE..relacion.2.5.1.0.dS.m),
-         Hierro..Fe..disponible.olsen.mg.kg = gsub("[< | >]", "",
-                                          Hierro..Fe..disponible.olsen.mg.kg),
-         Hierro..Fe..disponible.olsen.mg.kg = gsub("[,]", ".",
-                                          Hierro..Fe..disponible.olsen.mg.kg),
-         Cobre..Cu..disponible.mg.kg = gsub("[< | >]", "",
-                                          Cobre..Cu..disponible.mg.kg),
-         Cobre..Cu..disponible.mg.kg = gsub("[,]", ".",
-                                          Cobre..Cu..disponible.mg.kg),
-         Manganeso..Mn..disponible.Olsen.mg.kg = gsub("[< | >]", "",
-                                          Manganeso..Mn..disponible.Olsen.mg.kg),
-         Manganeso..Mn..disponible.Olsen.mg.kg = gsub("[,]", ".",
-                                          Manganeso..Mn..disponible.Olsen.mg.kg),
-         Zinc..Zn..disponible.Olsen.mg.kg = gsub("[< | >]", "",
-                                          Zinc..Zn..disponible.Olsen.mg.kg),
-         Zinc..Zn..disponible.Olsen.mg.kg = gsub("[,]", ".",
-                                          Zinc..Zn..disponible.Olsen.mg.kg),
-         Boro..B..disponible.mg.kg = gsub("[< | >]", "",
-                                          Boro..B..disponible.mg.kg),
-         Boro..B..disponible.mg.kg = gsub("[,]", ".",
-                                          Boro..B..disponible.mg.kg),
-         Hierro..Fe..disponible.doble..cido.mg.kg = gsub("[< | >]", "",
-                                          Hierro..Fe..disponible.doble..cido.mg.kg),
-         Hierro..Fe..disponible.doble..cido.mg.kg = gsub("[,]", ".",
-                                          Hierro..Fe..disponible.doble..cido.mg.kg),
-         Cobre..Cu..disponible.doble.acido.mg.kg = gsub("[< | >]", "",
-                                          Cobre..Cu..disponible.doble.acido.mg.kg),
-         Cobre..Cu..disponible.doble.acido.mg.kg = gsub("[,]", ".",
-                                          Cobre..Cu..disponible.doble.acido.mg.kg),
-         Manganeso..Mn..disponible.doble.acido.mg.kg = gsub("[< | >]", "",
-                                          Manganeso..Mn..disponible.doble.acido.mg.kg),
-         Manganeso..Mn..disponible.doble.acido.mg.kg = gsub("[,]", ".",
-                                          Manganeso..Mn..disponible.doble.acido.mg.kg),
-         Zinc..Zn..disponible.doble..cido.mg.kg = gsub("[< | >]", "",
-                                          Zinc..Zn..disponible.doble..cido.mg.kg),
-         Zinc..Zn..disponible.doble..cido.mg.kg = gsub("[,]", ".",
-                                          Zinc..Zn..disponible.doble..cido.mg.kg)) %>% 
-  # Punto 2.5
-  mutate_at(c("Departamento", "Municipio", "Cultivo", "Estado",
-              "Tiempo.Establecimiento", "Topografia", "Drenaje", "Riego",
-              "Fertilizantes.aplicados"), as.factor) %>% 
-  mutate_if(is.character, as.numeric) %>% 
-  # Punto 2.6
-  rename(tiempo_estab = Tiempo.Establecimiento,
-         fertilizantes = Fertilizantes.aplicados,
-         pH_agua_suelo = pH.agua.suelo.2.5.1.0,
-         materia_org = Materia.orgánica..MO...,
-         P_mg_kg = Fósforo..P..Bray.II.mg.kg,
-         S_mg_kg = Azufre..S..Fosfato.monocalcico.mg.kg,
-         acidez_cmol_kg = Acidez..Al.H..KCL.cmol....kg,
-         Al_cmol_kg = Aluminio..Al..intercambiable.cmol....kg,
-         Ca_cmol_kg = Calcio..Ca..intercambiable.cmol....kg,
-         Mg_cmol_kg = Magnesio..Mg..intercambiable.cmol....kg,
-         K_cmol_kg = Potasio..K..intercambiable.cmol....kg,
-         Na_cmol_kg = Sodio..Na..intercambiable.cmol....kg,
-         CICE = capacidad.de.intercambio.cationico..CICE..suma.de.bases.cmol....kg,
-         conductividad = Conductividad.el.ctrica..CE..relacion.2.5.1.0.dS.m,
-         Fe_olsen_mg_kg = Hierro..Fe..disponible.olsen.mg.kg,
-         Cu_doble1_mg_kg = Cobre..Cu..disponible.mg.kg,
-         Mn_olsen_mg_kg = Manganeso..Mn..disponible.Olsen.mg.kg,
-         Zn_olsen_mg_kg = Zinc..Zn..disponible.Olsen.mg.kg,
-         B_mg_kg = Boro..B..disponible.mg.kg,
-         Fe_doble_mg_kg = Hierro..Fe..disponible.doble..cido.mg.kg,
-         Cu_doble2_mg_kg = Cobre..Cu..disponible.doble.acido.mg.kg,
-         Mn_doble_mg_kg = Manganeso..Mn..disponible.doble.acido.mg.kg,
-         Zn_doble_mg_kg = Zinc..Zn..disponible.doble..cido.mg.kg) %>% 
-  # Punto 2.7
-  filter(materia_org > 0) %>% 
-  filter(P_mg_kg <= 100) %>% 
-  filter(S_mg_kg <= 50) %>% 
-  filter(Fe_olsen_mg_kg <= 1000) %>% 
-  filter(Cu_doble1_mg_kg <= 10) %>% 
-  filter(Zn_olsen_mg_kg <= 20) %>% 
-  filter(B_mg_kg <= 20) %>% 
-  # Finalizando depuración
-  select(-c(Zn_doble_mg_kg, Fe_doble_mg_kg, Cu_doble2_mg_kg, Mn_doble_mg_kg)) %>% 
-  droplevels()
-)
-  
-datos2
-```
-
-## 3. Información general
-
-- Inicialmente la base de datos (sin depurar) contaba con `r nrow(datos1)` filas, sin embargo, después de depurada se tienen `r nrow(datos2)`. El total de registros están distribuidos de la siguiente manera:
-    - **Departamentos:** información de `r length(levels(datos2$Departamento))` departamentos.
-    - **Municipios:** información de `r length(levels(datos2$Municipio))` municipios.
-    - **Cultivos:** información de `r length(levels(datos2$Cultivo))` culivos.
-    - **Estado del cultivo:** 
-        - Establecido
-        - Por establecer
-        - No indica
-    - **Tiempo de establecido el cultivo:**
-        - 0 a 1 año
-        - 1 a 5 años
-        - 5 a 10 años
-        - Más de 10 años
-        - No aplica
-        - No indica
-    - **Topografía:**
-        - Ligeramente ondulado
-        - Moderadamente ondulado
-        - Ondulado
-        - Ondulado y pendiente
-        - Pendiente
-        - Pendiente fuerte
-        - Pendiente leve
-        - Pendiente moderada
-        - Plano
-        - Plano y ondulado
-        - Plano y pendiente
-        - No indica
-        - <tred>Error.</tred> 212 registros presentan la categoría *"Error"* en esta variable.
-    - **Drenaje:**
-        - Bueno
-        - Malo
-        - Regular
-        - No indica
-        - <tred>Error.</tred> 21433 registros presentan la categoría *"Error"* en esta variable.
-    - **Riego:**
-        - Aspersión
-        - Aspersión y goteo
-        - Aspersión y gravedad
-        - Cañón
-        - Goteo
-        - Goteo y gravedad
-        - Gravedad
-        - Manguera
-        - Microaspersión
-        - No cuenta con riego
-        - Por inundación
-        - No indica
-    - **Fertilizantes:** información de `r length(levels(datos2$fertilizantes))` tipos de fertilización diferente.
-
-## 4. Análisis descriptivo
-
-### Deciles
-
-```{r}
-as.data.frame(datos2 %>%
-  select_if(is.numeric) %>%
-  apply(., 2,
-        function(x){
-          round(quantile(x, probs = seq(0.1, 1, 0.1), na.rm = TRUE), digits = 2)
-          }))
-```
-
-### Resumen numérico por departamento
-
-- **n:** número de registros.
-- **DE:** Desviación Estándar.
-- **CV:** Coeficiente de Variación (%).
-
-```{r}
-library(DT)
-library(tidyr)
-datos2 %>%
-  select(which(sapply(., class) == "numeric"), Departamento) %>%
-  gather(key = "variable", value = "valor",-Departamento) %>%
-  group_by(variable, Departamento) %>%
-  summarise(
-    n = n(),
-    Promedio = round(mean(valor, na.rm = TRUE), digits = 2),
-    Mediana = round(median(valor, na.rm = TRUE), digits = 2),
-    Mínimo = round(min(valor, na.rm = TRUE), digits = 2),
-    Máximo = round(max(valor, na.rm = TRUE), digits = 2),
-    DE = round(sd(valor, na.rm = TRUE), digits = 2),
-    Máximo = round(max(valor, na.rm = TRUE), digits = 2)
-  ) %>%
-  mutate(CV = round((DE / Promedio) * 100, digits = 2)) %>%
-  rename(Variable = variable) %>%
-  datatable()
-```
-
-### Resumen numérico por municipio
-
-- **n:** número de registros.
-- **DE:** Desviación Estándar.
-- **CV:** Coeficiente de Variación (%).
-- <tred>**Notas:**</tred>
-    - se filtran municipios con 5 o más registros.
-    - Se agrega la columna "Departamento" para saber a qué departamento corresponde el municipio.
-
-```{r, warning=FALSE, message=FALSE, error=FALSE}
-datos2 %>%
-  select(which(sapply(., class) == "numeric"), Municipio, Departamento) %>%
-  gather(key = "variable", value = "valor",-c(Municipio, Departamento)) %>%
-  group_by(variable, Municipio, Departamento) %>%
-  summarise(
-    n = n(),
-    Promedio = round(mean(valor, na.rm = TRUE), digits = 2),
-    Mediana = round(median(valor, na.rm = TRUE), digits = 2),
-    Mínimo = round(min(valor, na.rm = TRUE), digits = 2),
-    Máximo = round(max(valor, na.rm = TRUE), digits = 2),
-    DE = round(sd(valor, na.rm = TRUE), digits = 2),
-    Máximo = round(max(valor, na.rm = TRUE), digits = 2)
-  ) %>%
-  ungroup() %>% 
-  filter(Promedio > 0 & DE > 0) %>% 
-  filter(n >= 5) %>% 
-  mutate(CV = round((DE / Promedio) * 100, digits = 2)) %>%
-  rename(Variable = variable) %>%
-  datatable()
-```
-
-## 5. Análisis exploratorio
-
-## 6. Aprendizaje no supervisado
-
-### Componentes principales
-
-### Análisis de cluster
-
-## 7. Referencias
-
