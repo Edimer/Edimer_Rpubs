@@ -76,7 +76,7 @@ datos1 %>%
 
 
 ```{r}
-datos1 %>% 
+datos2 <- datos1 %>% 
   select(crto = Corregimiento,
          vereda = Vereda.Sector,
          area_ha = Area..Has.,
@@ -105,16 +105,184 @@ datos1 %>%
          animales = Numero,
          prodn_animal = Produccion,
          longitud = Longitud..W.,
-         latitud = Latitud..N.)
+         latitud = Latitud..N.) %>% 
+  mutate(area_ha = as.numeric(as.character(gsub(",", ".", area_ha))),
+         altitud = as.numeric(as.character(gsub(",", ".", altitud))),
+         temperatura = as.numeric(as.character(gsub(",", ".", temperatura))),
+         pluvi = as.numeric(as.character(gsub(",", ".", pluvi))),
+         area_cultivada = as.numeric(as.character(gsub(",", ".", area_cultivada))),
+         prodn_kg = as.numeric(as.character(gsub(",", ".", prodn_kg))),
+         p_mercado = as.numeric(as.character(gsub(",", ".", p_mercado))))
 ```
 
 
 ```{r}
-
+datos2 
 ```
 
 
 ```{r}
+datos2 %>% 
+  select_if(is.numeric) %>% 
+  select(-c(longitud, latitud)) %>% 
+  gather(key = "variable", value = "valor") %>% 
+  ggplot(data = ., aes(x = valor)) +
+  facet_wrap(~variable, scales = "free") +
+  geom_density()
+```
 
+```{r}
+datos2 %>% 
+  select_if(is.numeric) %>% 
+  select(-c(longitud, latitud)) %>% 
+  gather(key = "variable", value = "valor") %>% 
+  ggplot(data = ., aes(x = log(valor))) +
+  facet_wrap(~variable, scales = "free") +
+  geom_density()
+```
+
+
+```{r}
+datos2 %>% 
+  ggplot(data = ., aes(log(area_ha), log(area_cultivada))) +
+  geom_point() +
+  geom_smooth() +
+  geom_smooth(method = "lm", color = "red")
+```
+
+
+```{r}
+datos2 %>% 
+  group_by(cultivo) %>%
+  count() %>% 
+  filter(n >= 3) %>% 
+  ggplot(data = ., aes(x = reorder(cultivo, n), y = n)) +
+  geom_col() + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+```{r}
+datos2 %>% 
+  filter(cultivo == "Plátano") %>% 
+  filter(prodn_kg <= 200) %>% 
+  ggplot(data = ., aes(x = altitud, y = log(prodn_kg))) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE)
+```
+
+```{r}
+datos2 %>% 
+  filter(cultivo == "Plátano") %>% 
+  filter(prodn_kg <= 300) %>% 
+  ggplot(data = ., aes(x = altitud, y = log(prodn_kg))) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE)
+```
+
+```{r}
+datos2 %>% 
+  filter(cultivo == "Plátano") %>% 
+  filter(prodn_kg <= 300) %>% 
+  filter(longitud <= 50) %>% 
+  ggplot(data = ., aes(x = longitud, y = log(prodn_kg))) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE)
+```
+
+```{r}
+datos2 %>% 
+  mutate(area_usada = (area_cultivada/area_ha)*100) %>% 
+  filter(area_usada <= 200) %>% 
+  ggplot(data = ., aes(x = area_usada)) +
+  geom_density()
+```
+
+```{r}
+datos2 %>% 
+  filter(cultivo == "Plátano") %>% 
+  filter(prodn_kg <= 200) %>% 
+  mutate(rendimiento = prodn_kg/area_cultivada) %>% 
+  ggplot(data = ., aes(x = rendimiento)) +
+  geom_density()
+```
+
+
+```{r, fig.width=9}
+library(ggpubr)
+ggarrange(
+  
+  datos2 %>% 
+  filter(cultivo == "Plátano") %>% 
+  filter(prodn_kg <= 200) %>% 
+  ggplot(data = ., aes(x = altitud, y = log(prodn_kg))) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE)+
+  labs(title = "Producción"),
+
+  datos2 %>% 
+  filter(cultivo == "Plátano") %>% 
+  filter(prodn_kg <= 200) %>% 
+  mutate(rendimiento = prodn_kg/area_cultivada) %>% 
+  filter(altitud >= 940) %>% 
+  ggplot(data = ., aes(x = altitud, y = rendimiento)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  geom_smooth(se = FALSE, color = "red") +
+  labs(title = "Rendimiento"),
+  
+  ncol = 2
+) 
+```
+
+```{r, fig.width=9}
+datos2 %>% 
+  filter(cultivo == "Plátano") %>% 
+  filter(prodn_kg <= 200) %>% 
+  mutate(rendimiento = prodn_kg/area_cultivada) %>% 
+  filter(longitud <= 50) %>% 
+  ggplot(data = ., aes(x = longitud, y = rendimiento)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  geom_smooth(se = FALSE, color = "red") +
+  labs(title = "Rendimiento")
+```
+
+
+```{r, fig.width=9}
+datos2 %>% 
+  filter(cultivo == "Plátano") %>% 
+  filter(prodn_kg <= 200) %>% 
+  mutate(rendimiento = prodn_kg/area_cultivada) %>% 
+  ggplot(data = ., aes(x = altitud, y = rendimiento)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  geom_smooth(se = FALSE, color = "red") +
+  labs(title = "Rendimiento")
+```
+
+```{r, fig.width=9}
+datos2 %>% 
+  filter(cultivo == "Plátano") %>% 
+  filter(prodn_kg <= 200) %>% 
+  mutate(rendimiento = prodn_kg/area_cultivada) %>%
+  filter(longitud <= 0) %>% 
+  ggplot(data = ., aes(x = longitud, y = altitud)) +
+  geom_point() +
+  labs(title = "Rendimiento") +
+  coord_cartesian()
+```
+
+```{r}
+limit_inf_long <- min(datos2$longitud)
+library(GADMTools)
+col0 <- gadm_sf_loadCountries(fileNames = c("COL"), level = 2)
+gadm_plot(col0) +
+  xlim(-76.5, -76) +
+  ylim(3.2, 3.8) +
+  geom_point(data = datos2 %>% filter(longitud < 0) %>%
+               filter(cultivo == "Plátano"),
+             aes(x = longitud, y = latitud, color = prodn_kg)) +
+  labs(title = "Producción en kg de plátano",
+       subtitle = "Palmira, Valle del Cauca")
 ```
 
