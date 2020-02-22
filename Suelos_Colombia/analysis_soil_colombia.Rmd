@@ -368,7 +368,89 @@ datos2 %>%
 
 ## 5. Análisis exploratorio
 
+### pH vs Componentes del Suelo
+
+#### Mango
+
+```{r, warning=FALSE, message=FALSE, error=FALSE, fig.width=9, fig.height=8}
+datos2 %>%
+  filter(Cultivo == "Mango") %>% 
+  select(which(sapply(., class) == "numeric"), Municipio, Departamento, Estado) %>%
+  gather(key = "variable", value = "valor",-c(Municipio, Departamento, Estado,
+                                              pH_agua_suelo)) %>% 
+  ggplot(data = ., aes(x = pH_agua_suelo, y = valor)) +
+  facet_wrap(~variable, scales = "free") +
+  geom_bin2d() +
+  geom_smooth(se = FALSE, color = "red") +
+  theme_light() +
+  theme(strip.background = element_rect(fill = "black"))
+```
+
+#### P. Brachiaria
+
+```{r, warning=FALSE, message=FALSE, error=FALSE, fig.width=9, fig.height=8}
+datos2 %>%
+  filter(Cultivo == "Pastos-brachiaria") %>% 
+  select(which(sapply(., class) == "numeric"), Municipio, Departamento, Estado) %>%
+  gather(key = "variable", value = "valor",-c(Municipio, Departamento, Estado,
+                                              pH_agua_suelo)) %>% 
+  ggplot(data = ., aes(x = pH_agua_suelo, y = valor)) +
+  facet_wrap(~variable, scales = "free") +
+  geom_bin2d() +
+  geom_smooth(se = FALSE, color = "red") +
+  theme_light() +
+  theme(strip.background = element_rect(fill = "black"))
+```
+
+#### Limón
+
+```{r, warning=FALSE, message=FALSE, error=FALSE, fig.width=9, fig.height=8}
+datos2 %>%
+  filter(Cultivo == "Cítricos-limón") %>% 
+  select(which(sapply(., class) == "numeric"), Municipio, Departamento, Estado) %>%
+  gather(key = "variable", value = "valor",-c(Municipio, Departamento, Estado,
+                                              pH_agua_suelo)) %>% 
+  ggplot(data = ., aes(x = pH_agua_suelo, y = valor)) +
+  facet_wrap(~variable, scales = "free") +
+  geom_bin2d() +
+  geom_smooth(se = FALSE, color = "red") +
+  theme_light() +
+  theme(strip.background = element_rect(fill = "black"))
+```
+
+#### Uva
+
+```{r, warning=FALSE, message=FALSE, error=FALSE, fig.width=9, fig.height=8}
+datos2 %>%
+  filter(Cultivo == "Uva") %>% 
+  select(which(sapply(., class) == "numeric"), Municipio, Departamento, Estado) %>%
+  gather(key = "variable", value = "valor",-c(Municipio, Departamento, Estado,
+                                              pH_agua_suelo)) %>% 
+  ggplot(data = ., aes(x = pH_agua_suelo, y = valor)) +
+  facet_wrap(~variable, scales = "free") +
+  geom_bin2d() +
+  geom_smooth(se = FALSE, color = "red") +
+  theme_light() +
+  theme(strip.background = element_rect(fill = "black"))
+```
+
+#### Aguacate
+
+```{r, warning=FALSE, message=FALSE, error=FALSE, fig.width=9, fig.height=8}
+datos2 %>%
+  filter(Cultivo == "Aguacate") %>% 
+  select(which(sapply(., class) == "numeric"), Municipio, Departamento, Estado) %>%
+  gather(key = "variable", value = "valor",-c(Municipio, Departamento, Estado,
+                                              pH_agua_suelo)) %>% 
+  ggplot(data = ., aes(x = pH_agua_suelo, y = valor)) +
+  facet_wrap(~variable, scales = "free") +
+  geom_bin2d() +
+  geom_smooth(se = FALSE, color = "red") +
+  theme_light() +
+  theme(strip.background = element_rect(fill = "black"))
+```
 ## 6. Aprendizaje no supervisado
+
 
 ### Componentes principales
 
