@@ -6,6 +6,7 @@ Repositorio con documentos publicados en Rpubs.
 
 Lista de algunos documentos publicados:
 
+- [Clasificación de texto - Covid19 Zindi África.](https://rpubs.com/Edimer/612558)
 - [Análisis exploratorio de casos y muertes de VIH en Colombia.](https://rpubs.com/Edimer/326811)
 - [Crecimiento del parque automotor vs calidad de aire, Colombia.](https://rpubs.com/Edimer/481799)
 - [Clasificación de imágenes satelitales: aprendizaje no supervisado con R.](https://rpubs.com/Edimer/519971)
