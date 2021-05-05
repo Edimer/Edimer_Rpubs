@@ -6,6 +6,17 @@ Repositorio con documentos publicados en Rpubs.
 
 Lista de algunos documentos publicados:
 
+- [Extracción de datos SoilGrids con R](https://rpubs.com/Edimer/763111)
+- [Autocorrelación espacial con R](https://rpubs.com/Edimer/675143)
+- [Mapas interactivos con R](https://rpubs.com/Edimer/673994)
+- [Modelos raster con R](https://rpubs.com/Edimer/673524)
+- [Introducción a sistemas de información geográfica con R](https://rpubs.com/Edimer/673433)
+- [Predicción de precios de apartamento: reto de Data Science Zindi África](https://rpubs.com/Edimer/648887)
+- [Ejemplo de dashboard con R: datos de piscicultura](https://rpubs.com/Edimer/644810)
+- [Guía de instalación de LightGBM](https://rpubs.com/Edimer/589672)
+- [Tensor Flow con R: ejemplo de clasificación](https://rpubs.com/Edimer/564284)
+- [Sistemas de graficación con R](https://rpubs.com/Edimer/563530)
+- [Análisis de regresión con R: replicando resultados artículo PLOS ONE](https://rpubs.com/Edimer/565984)
 - [Clasificación de texto - Covid19 Zindi África.](https://rpubs.com/Edimer/612558)
 - [Análisis exploratorio de casos y muertes de VIH en Colombia.](https://rpubs.com/Edimer/326811)
 - [Crecimiento del parque automotor vs calidad de aire, Colombia.](https://rpubs.com/Edimer/481799)
